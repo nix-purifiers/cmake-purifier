@@ -369,11 +369,20 @@ in
     '';
 
   # A real-world project: libcpr/cpr, built from a lockfile kept in
-  # tests/real-world/cpr, with its test suites run.
+  # tests/real-world/cpr, with its test suites run. The lockfile records
+  # the outputs of one platform, and cpr installs shared libraries, whose
+  # names differ off Linux (libcpr.so on Linux, libcpr.dylib on macOS), so
+  # it builds on Linux only.
   real-world-cpr =
-    (import ./real-world/cpr {
-      inherit pkgs buildCMakeProject;
-    }).tests;
+    if pkgs.stdenv.hostPlatform.isLinux then
+      (import ./real-world/cpr {
+        inherit pkgs buildCMakeProject;
+      }).tests
+    else
+      pkgs.runCommand "real-world-cpr-skipped" { } ''
+        echo "cmake-purifier: real-world-cpr is skipped on ${pkgs.stdenv.hostPlatform.system}, where cpr's shared libraries have other names than the Linux ones its lockfile records" >&2
+        touch $out
+      '';
 
   # The source and the development shell that tests/relock-fixtures.sh
   # locks cpr with.

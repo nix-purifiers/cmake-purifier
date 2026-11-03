@@ -182,7 +182,9 @@ writeShellApplication {
     lock() {
       [ -f "$source/CMakeLists.txt" ] || die "$source has no CMakeLists.txt"
       started=$SECONDS
-      work=$(mktemp -d)
+      # The physical path, as the tools record their working directories:
+      # on macOS the temporary directory is under the symlinks /var or /tmp.
+      work=$(realpath "$(mktemp -d)")
       trap 'kill "''${recorder:-}" 2>/dev/null || true; chmod -R u+w "$work" 2>/dev/null || true; rm -rf "$work"' EXIT
 
       # mitmproxy forwards to the user's own proxy when one is set.

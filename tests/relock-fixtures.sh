@@ -53,10 +53,14 @@ if [ "$repos" != "$committedRepos" ]; then
 fi
 
 # libcpr/cpr, from its pinned source, in its development shell, into the
-# lockfile kept in tests/real-world/cpr.
-cpr=$(nix build --no-link --print-out-paths "$root#checks.$system.real-world-cpr-src")
-nix develop "$root#checks.$system.real-world-cpr-shell" -c \
-  cmake-purifier lock -S "$cpr" --lockfile "$root/tests/real-world/cpr/cmake-purifier.lock.json" -DCPR_BUILD_TESTS=ON
+# lockfile kept in tests/real-world/cpr. The lockfile records the names of
+# cpr's shared libraries on Linux, which differ elsewhere, so it locks on
+# Linux only.
+if [ "${system##*-}" = linux ]; then
+  cpr=$(nix build --no-link --print-out-paths "$root#checks.$system.real-world-cpr-src")
+  nix develop "$root#checks.$system.real-world-cpr-shell" -c \
+    cmake-purifier lock -S "$cpr" --lockfile "$root/tests/real-world/cpr/cmake-purifier.lock.json" -DCPR_BUILD_TESTS=ON
+fi
 
 # nixpkgs' cvs aborts on aarch64-linux, so the CVS fixture locks on
 # x86_64-linux only.

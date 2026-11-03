@@ -21,9 +21,13 @@ scratch=$(mktemp -d)
 trap 'chmod -R u+w "$scratch"; rm -rf "$scratch"' EXIT
 
 # The tools of the loop, built with the network, so that the loop itself
-# needs no Nix.
+# needs no Nix. unshare and ip, for the namespace, are Linux tools.
+netTools=()
+if [ "$(uname -s)" = Linux ]; then
+  netTools=('nixpkgs#iproute2' 'nixpkgs#util-linux')
+fi
 tools=$(nix build --no-link --print-out-paths 'nixpkgs#gcc' 'nixpkgs#gnumake' 'nixpkgs#cmake' \
-  'nixpkgs#clang-tools' 'nixpkgs#iproute2' 'nixpkgs#util-linux' "$root#cmake-purifier")
+  'nixpkgs#clang-tools' ${netTools[@]+"${netTools[@]}"} "$root#cmake-purifier")
 # $tools is one store path per line, which the split makes arguments.
 # shellcheck disable=SC2086
 loopPath=$(printf '%s/bin:' $tools)$PATH
@@ -53,8 +57,15 @@ prefetch basic
 basic=$scratch/basic
 offline cmake -S "$basic" -B "$basic/build" -C "$basic/.cmake-purifier/initial-cache.txt"
 # The editor: clangd reads the build directory's compile_commands.json and
-# finds the headers of fmt and argparse in the prefetched sources.
-offline clangd --check="$basic/main.cpp" --compile-commands-dir="$basic/build" > "$scratch/clangd.log" 2>&1 || {
+# finds the headers of fmt and argparse in the prefetched sources. On macOS
+# the C headers are in the SDK, which only the compiler's wrapper names, so
+# clangd asks the compiler for its include paths.
+clangdArgs=()
+if [ "$(uname -s)" = Darwin ]; then
+  clangdArgs=("--query-driver=$(dirname "$(PATH=$loopPath command -v c++)")/*")
+fi
+offline clangd --check="$basic/main.cpp" --compile-commands-dir="$basic/build" ${clangdArgs[@]+"${clangdArgs[@]}"} \
+  > "$scratch/clangd.log" 2>&1 || {
   echo "clangd failed on the offline build directory:" >&2
   cat "$scratch/clangd.log" >&2
   exit 1

@@ -137,6 +137,16 @@ let
           }" "${realTool "cvs" cvs "cvs"}"
         cmakeFlagsArray+=(-C "$NIX_BUILD_TOP/cmake-purifier/cache.cmake")
       ''
+      # The ranlib of darwin, cctools' libtool, writes the ids of the build
+      # user into an archive's symbol table, and a darwin build runs as
+      # whichever build user is free. With -D it writes zeros, as llvm-ar
+      # does for the members. CMake runs RANLIB on each archive it makes and
+      # on its install, and the fixup again after strip.
+      + lib.optionalString stdenv.hostPlatform.isDarwin ''
+        printf '#!%s\nexec %q -D "$@"\n' "$BASH" "$(command -v "$RANLIB")" > "$NIX_BUILD_TOP/cmake-purifier/ranlib"
+        chmod +x "$NIX_BUILD_TOP/cmake-purifier/ranlib"
+        export RANLIB=$NIX_BUILD_TOP/cmake-purifier/ranlib
+      ''
       + preConfigure;
       lockedOutputs = lib.concatMapStrings (f: "${f}\n") outputs.files;
       passAsFile = [ "lockedOutputs" ];

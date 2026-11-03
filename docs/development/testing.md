@@ -53,7 +53,9 @@ the sandbox are CI jobs of the same name.
    - `real-world-cpr` builds libcpr/cpr 1.15.1 from its pinned source and
      the lockfile in `tests/real-world/cpr`, and runs its test suites.
      `real-world-cpr-src` and `real-world-cpr-shell` are the source and
-     the development shell that the relock locks it with.
+     the development shell that the relock locks it with. Its lockfile,
+     locked on Linux, names Linux's shared libraries, so elsewhere
+     `real-world-cpr` is a check that prints that it skips the project.
    - `nix-library` runs `tests/nix-library.nix`, which applies the library
      to a hand-written lockfile with fetchers that download nothing.
    - `cmake-purifier` builds the command, which runs shellcheck on it.

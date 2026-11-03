@@ -263,6 +263,10 @@ These are refused or unsupported:
   as `fetchers.fetchgit`; a company mirror goes in `fetchers.fetchurl`.
 - **CVS on aarch64-linux.** nixpkgs' cvs does not run on aarch64-linux, so
   a project with a CVS checkout locks and builds on x86_64-linux only.
+- **Shared libraries across Linux and macOS.** `outputs` records the files
+  of the lock run's install, and shared libraries have other names on each
+  (`lib/libcpr.so` on Linux, `lib/libcpr.dylib` on macOS), so a project
+  that installs them builds only on the OS its lockfile was locked on.
 - **Version-control commands other than the checkout steps, on a locked
   checkout.** A locked checkout holds the files of its revision and no
   history, which keeps its hash reproducible. The shims answer the

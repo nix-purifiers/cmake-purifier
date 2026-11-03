@@ -33,6 +33,10 @@
 # Subversion_SVN_EXECUTABLE or CVS_EXECUTABLE. Every entry is FORCE, so
 # `cmake -C` with this file also updates an existing build directory.
 set -eu
+# The glob of deps/ sorts by the locale. With none set, as in a Nix build,
+# nixpkgs' bash on macOS takes the system's, so the C locale keeps the
+# order of CMAKE_PURIFIER_LOCKED the same everywhere.
+export LC_ALL=C
 
 tree=$1
 copies=$2
