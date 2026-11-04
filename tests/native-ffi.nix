@@ -2,37 +2,11 @@
 { pkgs, buildCMakeProject }:
 let
   src = ./fixtures/native-ffi;
-  body = {
-    version = 3;
-    project = {
-      name = "purifier_ffi";
-      version = "1.0.0";
-    };
-    definitionHash = import ../nix/lib/definition-hash.nix src;
-    cmakeFlags = [ ];
-    artifacts = [ ];
-    dependencies = [ ];
-    gitCheckouts = [ ];
-    outputs = {
-      files = [
-        "lib/libproof${pkgs.stdenv.hostPlatform.extensions.sharedLibrary}"
-        "include/proof.h"
-        "lib/pkgconfig/proof.pc"
-      ];
-      targets.proof = {
-        type = "SHARED_LIBRARY";
-        files = [ "lib/libproof${pkgs.stdenv.hostPlatform.extensions.sharedLibrary}" ];
-      };
-    };
-  };
-  lockFile = pkgs.writeText "cmake-purifier.lock.json" (
-    builtins.toJSON (
-      body
-      // {
-        contentHash = "sha256:" + builtins.hashString "sha256" (builtins.toJSON body);
-      }
-    )
-  );
+  lockFile =
+    if pkgs.stdenv.hostPlatform.isDarwin then
+      ./fixtures/native-ffi/darwin.lock.json
+    else
+      ./fixtures/native-ffi/linux.lock.json;
   built = buildCMakeProject {
     inherit src lockFile;
     buildInputs = [ pkgs.zlib ];
