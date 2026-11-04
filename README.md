@@ -342,6 +342,23 @@ cpr's tests need no network: they talk to a server that the tests start
 on the machine itself. Its test suites each use the same port, so a
 build that runs them sets `enableParallelChecking = false;` beside `src`.
 
+## Native projections
+
+Installed `SHARED_LIBRARY` targets expose `projections.native`,
+`projections.python-ffi`, and `projections.java-ffi` on the builder result
+and its package. Targets and paths come from native lock metadata. Static-only
+projects have no FFI projections. Unsupported or ambiguous shared artifacts
+fail when the projection is requested.
+
+The catalog records producer identity, target system, library paths, headers
+and pkg-config directories. Add the `python-ffi` view to `PYTHONPATH`, use
+`purifier_native.load("target-name")`, and set ctypes signatures for its C API.
+Java can load catalog paths through FFM or use the `java-ffi/java.args` library
+path with existing JNI bindings. C++ requires compatible bindings; JNI is not
+generated. Libraries retain their Nix runtime closure. The integration check
+exercises ctypes, Java 21 FFM with preview enabled, and ordinary C/pkg-config,
+including a zlib dependency. Other systems are not implied by this local proof.
+
 ## Credits
 
 The purifier idea was inspired by nixcloud's

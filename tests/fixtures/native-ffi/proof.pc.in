@@ -1,0 +1,9 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: proof
+Description: Cross-language projection fixture
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lproof
+Cflags: -I${includedir}
