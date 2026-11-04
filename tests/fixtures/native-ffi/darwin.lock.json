@@ -1,0 +1,28 @@
+{
+  "version": 3,
+  "project": {
+    "name": "purifier_ffi",
+    "version": "1.0.0"
+  },
+  "definitionHash": "174a9ae34bcccabafbeea7e438e5223794a5f8a9bea1aa458feab16b3eb85aae",
+  "cmakeFlags": [],
+  "artifacts": [],
+  "dependencies": [],
+  "gitCheckouts": [],
+  "outputs": {
+    "files": [
+      "lib/libproof.dylib",
+      "include/proof.h",
+      "lib/pkgconfig/proof.pc"
+    ],
+    "targets": {
+      "proof": {
+        "type": "SHARED_LIBRARY",
+        "files": [
+          "lib/libproof.dylib"
+        ]
+      }
+    }
+  },
+  "contentHash": "sha256:2a92084c70c930dd74440980f88612c037c9eadb0ab14cdc975cd4c864fe9361"
+}
