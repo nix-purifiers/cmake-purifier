@@ -66,6 +66,7 @@
   mitm-cache,
   gnutar,
   runCommand,
+  python3,
   callPackage,
   # The shared library's functions (lib.purifier of the purifier flake),
   # which the package overlay passes.
@@ -105,6 +106,14 @@ let
       }
     else
       lock.outputs;
+
+  projections = purifier.nativeTargetProjections {
+    producer = package;
+    targets = outputs.targets;
+    installedFiles = outputs.files;
+    system = stdenv.hostPlatform.system;
+    inherit runCommand python3;
+  };
 
   package = stdenv.mkDerivation (
     finalAttrs:
@@ -170,7 +179,7 @@ let
         [ "$missing" = 0 ]
       '';
       passthru = passthru // {
-        inherit sources;
+        inherit sources projections;
         installed = lib.genAttrs outputs.files (file: "${finalAttrs.finalPackage}/${file}");
         targets = builtins.mapAttrs (
           _: target:
@@ -185,6 +194,7 @@ let
 in
 {
   packages.${pname} = package;
+  inherit projections;
 
   tests = package.overrideAttrs {
     pname = "${pname}-tests";

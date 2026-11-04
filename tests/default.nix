@@ -142,6 +142,7 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  native-ffi = import ./native-ffi.nix { inherit pkgs buildCMakeProject; };
   basic = basicPackage;
 
   # ctest runs the doctest suite, which includes the header that the lock
