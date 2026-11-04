@@ -357,7 +357,8 @@ Java can load catalog paths through FFM or use the `java-ffi/java.args` library
 path with existing JNI bindings. C++ requires compatible bindings; JNI is not
 generated. Libraries retain their Nix runtime closure. The integration check
 exercises ctypes, Java 21 FFM with preview enabled, and ordinary C/pkg-config,
-including a zlib dependency. Other systems are not implied by this local proof.
+including zlib's version and its actual loaded library path through `dladdr`.
+Other systems are not implied by this local proof.
 
 ## Credits
 

@@ -37,9 +37,22 @@ pkgs.runCommand "cmake-native-foreign-consumers"
   ''
     export PYTHONPATH=${ffi.python-ffi}
     python - <<'PY'
-    import json, purifier_native
+    import ctypes, json, os, purifier_native
     import runpy
-    assert purifier_native.load("proof").answer() == 42
+    library = purifier_native.load("proof")
+    assert library.answer() == 42
+    library.proof_zlib_version.restype = ctypes.c_char_p
+    assert library.proof_zlib_version().decode() == '${pkgs.zlib.version}'
+    library.proof_zlib_address.restype = ctypes.c_void_p
+    class DlInfo(ctypes.Structure):
+        _fields_ = [('filename', ctypes.c_char_p), ('base', ctypes.c_void_p),
+                    ('symbol', ctypes.c_char_p), ('address', ctypes.c_void_p)]
+    dladdr = ctypes.CDLL(None).dladdr
+    dladdr.argtypes = [ctypes.c_void_p, ctypes.POINTER(DlInfo)]
+    info = DlInfo()
+    assert dladdr(library.proof_zlib_address(), ctypes.byref(info)) != 0
+    actual = os.path.realpath(info.filename.decode())
+    assert actual.startswith(os.path.realpath('${pkgs.zlib}') + '/'), actual
     changed = runpy.run_path('${advancedFfi.python-ffi}/purifier_native.py')
     assert changed['load']('proof').answer() == 43
     assert purifier_native.load("proof").answer() == 42
