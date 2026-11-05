@@ -142,6 +142,10 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  resource-schema = import ./resource-schema.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   native-ffi = import ./native-ffi.nix { inherit pkgs buildCMakeProject; };
   basic = basicPackage;
 
