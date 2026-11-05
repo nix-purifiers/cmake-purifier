@@ -76,6 +76,9 @@
   src,
   lockFile ? src + "/cmake-purifier.lock.json",
   fetchers ? { },
+  resourceRoots ? { },
+  resourceDependencies ? [ ],
+  resourceSchema ? null,
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
   preConfigure ? "",
@@ -107,19 +110,32 @@ let
     else
       lock.outputs;
 
-  projections = purifier.nativeTargetProjections {
-    producer = package;
-    targets = outputs.targets;
-    installedFiles = outputs.files;
-    system = stdenv.hostPlatform.system;
-    inherit runCommand python3;
-  };
+  projections =
+    (purifier.nativeTargetProjections {
+      producer = package;
+      targets = outputs.targets;
+      installedFiles = outputs.files;
+      system = stdenv.hostPlatform.system;
+      inherit runCommand python3;
+    })
+    // lib.optionalAttrs (resourceRoots != { }) (
+      purifier.resourceProjections {
+        producer = package;
+        roots = resourceRoots;
+        dependencies = resourceDependencies;
+        schema = resourceSchema;
+        inherit runCommand python3;
+      }
+    );
 
   package = stdenv.mkDerivation (
     finalAttrs:
     removeAttrs args [
       "lockFile"
       "fetchers"
+      "resourceRoots"
+      "resourceDependencies"
+      "resourceSchema"
     ]
     // {
       inherit pname version src;

@@ -360,6 +360,32 @@ exercises ctypes, Java 21 FFM with preview enabled, and ordinary C/pkg-config,
 including zlib's version and its actual loaded library path through `dladdr`.
 Other systems are not implied by this local proof.
 
+## Installed resources and schema bundles
+
+Select installed public artifacts using `resourceRoots`, mapping public paths
+to paths relative to the installation prefix. For example:
+
+```nix
+resourceRoots."." = "share/schemas";
+resourceSchema = { format = "thrift"; entrypoints = [ "main.thrift" ]; };
+```
+
+The build result exposes `projections.resources`, `web`, and `java-resources`
+alongside its existing native-library projections. The full installed package
+exposes the same views. Use `.directory` as a compiler include root,
+`.documentRoot` for static serving, and `.classPath` for Java resources at their
+native paths. `resourceDependencies` can contribute other resource bundles;
+collisions fail. Empty/default selections produce no resource projection.
+
+Optional `resourceSchema` records native format and entrypoints. Select the
+complete import/include tree; the adapter does not parse schemas or manufacture
+language bindings. Existing project downloads and compiler/runtime choices stay
+in their native inputs. A Thrift fixture installs a schema with a separate
+included schema, compiles the projected tree with ordinary Thrift, round-trips a
+message with its pinned Python runtime, and checks every selected resource over
+HTTP and Java. Private installed siblings are excluded. Other formats may use
+this resource mechanism but need their own native compiler/runtime validation.
+
 ## Credits
 
 The purifier idea was inspired by nixcloud's
