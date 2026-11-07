@@ -24,6 +24,11 @@
             pkgs.util-linux
             pkgs.iproute2
           ];
+          postBuild = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+            mkdir -p "$out/nix-support"
+            ln -s ${pkgs.apple-sdk} "$out/nix-support/darwin-developer-dir"
+            ln -s ${pkgs.apple-sdk.sdkroot} "$out/nix-support/darwin-sdkroot"
+          '';
         };
       selected = cmake: pkgs.cmake-purifier.overrideScope (_: _: { inherit cmake; });
       sample = import ../real-world/spdlog {
