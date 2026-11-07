@@ -7,13 +7,18 @@ import sys
 
 assert sys.platform == "darwin", sys.platform
 
-for kind, port in [(socket.SOCK_STREAM, 443), (socket.SOCK_DGRAM, 53)]:
+denials = {}
+for kind in [socket.SOCK_STREAM, socket.SOCK_DGRAM]:
     with socket.socket(socket.AF_INET, kind) as client:
         client.settimeout(2)
         try:
-            client.connect(("1.1.1.1", port))
+            if kind == socket.SOCK_DGRAM:
+                client.sendto(b"forbidden", ("198.51.100.1", 443))
+            else:
+                client.connect(("198.51.100.1", 443))
         except OSError as error:
-            assert error.errno == errno.EPERM, (kind, error)
+            assert error.errno in (errno.EPERM, errno.EACCES), (kind, error)
+            denials[kind.name] = errno.errorcode[error.errno]
         else:
             raise AssertionError(f"external connection allowed for socket kind {kind}")
 
@@ -40,4 +45,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server:
         server.sendto(b"reply", peer)
         assert client.recvfrom(64)[0] == b"reply"
 
-print("Darwin TCP/UDP loopback and external EPERM controls passed")
+print(f"Darwin TCP/UDP loopback and external outbound denial controls passed: {denials}")
