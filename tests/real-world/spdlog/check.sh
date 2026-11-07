@@ -30,7 +30,7 @@ consumer() {
   offline "$scratch/consumer-$1/consumer"
 }
 consumer ordinary "$scratch/install"
-nixPackage=$(nix build --option allow-import-from-derivation false --no-link --print-out-paths -L "$root#test-spdlog")
+nixPackage=$(nix build --option sandbox true --option allow-import-from-derivation false --no-link --print-out-paths -L "$root#test-spdlog")
 consumer nix "$nixPackage"
 # A missing producer must fail discovery, rather than picking up the other
 # installation from the earlier consumer's build cache.

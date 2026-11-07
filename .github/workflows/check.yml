@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 #
-# The checks of every push and pull request, on x86_64-linux and, on
-# GitHub's arm runner, aarch64-linux. Each job runs on both.
+# The checks of every push and pull request run natively on x86_64-linux,
+# aarch64-linux, and GitHub's aarch64-darwin runner.
 #
 # - `flake-check` builds every flake check, the `conformance-*` checks
 #   that run in the sandbox among them, and evaluates the checks of both
@@ -56,6 +56,9 @@ jobs:
       - name: Record the native platform and source
         run: |
           git rev-parse HEAD
+          sandbox=$(nix config show sandbox)
+          echo "Nix sandbox: $sandbox"
+          test "$sandbox" = true
           uname -a
           system=$(nix eval --impure --raw --expr builtins.currentSystem)
           echo "Nix system: $system"
@@ -66,7 +69,7 @@ jobs:
       - name: Build the flake checks
         if: matrix.job == 'flake-check'
         run: |
-          nix flake check -L
+          nix flake check --option sandbox true --option allow-import-from-derivation false -L
           nix flake check --all-systems --no-build
       - name: Relock the fixtures and compare
         if: matrix.job == 'conformance-relock'
@@ -125,6 +128,9 @@ jobs:
           CMAKE_PURIFIER_REQUIRE_OFFLINE: 1
         run: |
           git rev-parse HEAD
+          sandbox=$(nix config show sandbox)
+          echo "Nix sandbox: $sandbox"
+          test "$sandbox" = true
           system=$(nix eval --impure --raw --expr builtins.currentSystem)
           if [ "${{ matrix.runner }}" = macos-15 ]; then
             test "$system" = aarch64-darwin
@@ -134,7 +140,7 @@ jobs:
           fi
           tests/toolchains/check.sh '${{ matrix.version }}'
           key=$(echo '${{ matrix.version }}' | tr . _)
-          nix build --option allow-import-from-derivation false --no-link -L ".#checks.$system.sdk-basic-$key"
+          nix build --option sandbox true --option allow-import-from-derivation false --no-link -L ".#checks.$system.sdk-basic-$key"
           nix derivation show ".#checks.$system.sdk-basic-$key"
           nix path-info --json ".#checks.$system.sdk-basic-$key"
 
@@ -161,6 +167,9 @@ jobs:
           CMAKE_PURIFIER_REQUIRE_OFFLINE: 1
         run: |
           git rev-parse HEAD
+          sandbox=$(nix config show sandbox)
+          echo "Nix sandbox: $sandbox"
+          test "$sandbox" = true
           system=$(nix eval --impure --raw --expr builtins.currentSystem)
           if [ "${{ matrix.runner }}" = macos-15 ]; then
             test "$system" = aarch64-darwin
@@ -169,6 +178,6 @@ jobs:
             sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           fi
           tests/real-world/spdlog/check.sh
-          nix build --option allow-import-from-derivation false --no-link -L ".#checks.$system.real-world-spdlog-consumer"
+          nix build --option sandbox true --option allow-import-from-derivation false --no-link -L ".#checks.$system.real-world-spdlog-consumer"
           nix derivation show ".#checks.$system.real-world-spdlog-consumer"
           nix path-info --json ".#checks.$system.real-world-spdlog-consumer"
