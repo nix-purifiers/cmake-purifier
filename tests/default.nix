@@ -406,6 +406,18 @@ in
   inherit cmake-purifier;
 }
 // (import ./toolchains/checks.nix { inherit pkgs buildCMakeProject; })
+// lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+  darwin-loopback-outbound =
+    pkgs.runCommand "cmake-darwin-loopback-outbound"
+      {
+        __darwinAllowLocalNetworking = true;
+        nativeBuildInputs = [ pkgs.python3 ];
+      }
+      ''
+        python3 ${./network-probe.py}
+        touch $out
+      '';
+}
 // (
   if vcsRepos.cvsWorks then
     {
