@@ -137,6 +137,11 @@ let
       "resourceDependencies"
       "resourceSchema"
     ]
+    // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
+      # Replay listens only on loopback. Keep external outbound networking denied
+      # by the Nix sandbox, and preserve an explicit caller override.
+      __darwinAllowLocalNetworking = args.__darwinAllowLocalNetworking or true;
+    }
     // {
       inherit pname version src;
       nativeBuildInputs = [

@@ -181,3 +181,8 @@ jobs:
           nix build --option sandbox true --option allow-import-from-derivation false --no-link -L ".#checks.$system.real-world-spdlog-consumer"
           nix derivation show ".#checks.$system.real-world-spdlog-consumer"
           nix path-info --json ".#checks.$system.real-world-spdlog-consumer"
+          if [ "$system" = aarch64-darwin ]; then
+            nix build --option sandbox true --option allow-import-from-derivation false --no-link -L ".#checks.$system.darwin-loopback-outbound"
+            nix derivation show ".#checks.$system.darwin-loopback-outbound"
+            nix path-info --json ".#checks.$system.darwin-loopback-outbound"
+          fi

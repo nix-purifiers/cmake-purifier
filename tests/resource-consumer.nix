@@ -1,12 +1,18 @@
 # SPDX-License-Identifier: MIT
 { pkgs, projection }:
 pkgs.runCommand "ordinary-resource-consumers"
-  {
-    nativeBuildInputs = [
-      pkgs.python3
-      pkgs.jdk
-    ];
-  }
+  (
+    {
+      nativeBuildInputs = [
+        pkgs.python3
+        pkgs.jdk
+      ];
+    }
+    // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+      # The ordinary consumers reach a server on loopback inside this check.
+      __darwinAllowLocalNetworking = true;
+    }
+  )
   ''
     python - <<'PY'
     import functools, hashlib, http.server, json, pathlib, threading, urllib.request
