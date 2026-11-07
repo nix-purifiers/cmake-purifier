@@ -57,6 +57,9 @@
 #   the download entries of the shared library that the build fetches.
 {
   lib,
+  nativeProfile ? "modern-v1",
+  legacyProjectName ? null,
+  legacySdkAdapter ? null,
   stdenv,
   cmake,
   git,
@@ -87,151 +90,163 @@
   passthru ? { },
   ...
 }@args:
-let
-  sources = callPackage ./sources.nix {
-    inherit lockFile fetchers purifier;
-    projectSrc = src;
-  };
-  inherit (sources) lock;
-  # A tool the build checks out with, for the commands its shim passes on;
-  # empty when the lockfile has no checkouts of it.
-  realTool =
-    tool: package: name:
-    if (lock."${tool}Checkouts" or [ ]) != [ ] then "${package}/bin/${name}" else "";
-  projectVersion = lock.project.version or "";
-  pname = args.pname or lock.project.name;
-  version = args.version or (if projectVersion == "" then "0" else projectVersion);
-  outputs =
-    if lock.outputs == null then
-      {
-        files = [ ];
-        targets = { };
-      }
-    else
-      lock.outputs;
+if nativeProfile == "legacy-external-v1" then
+  callPackage ./legacy-build-cmake-project.nix {
+    inherit
+      cmake
+      purifier
+      legacyProjectName
+      legacySdkAdapter
+      ;
+  } args
+else if nativeProfile != "modern-v1" then
+  throw "cmake-purifier: unknown nativeProfile ${nativeProfile}"
+else
+  let
+    sources = callPackage ./sources.nix {
+      inherit lockFile fetchers purifier;
+      projectSrc = src;
+    };
+    inherit (sources) lock;
+    # A tool the build checks out with, for the commands its shim passes on;
+    # empty when the lockfile has no checkouts of it.
+    realTool =
+      tool: package: name:
+      if (lock."${tool}Checkouts" or [ ]) != [ ] then "${package}/bin/${name}" else "";
+    projectVersion = lock.project.version or "";
+    pname = args.pname or lock.project.name;
+    version = args.version or (if projectVersion == "" then "0" else projectVersion);
+    outputs =
+      if lock.outputs == null then
+        {
+          files = [ ];
+          targets = { };
+        }
+      else
+        lock.outputs;
 
-  projections =
-    (purifier.nativeTargetProjections {
-      producer = package;
-      targets = outputs.targets;
-      installedFiles = outputs.files;
-      system = stdenv.hostPlatform.system;
-      inherit runCommand python3;
-    })
-    // lib.optionalAttrs (resourceRoots != { }) (
-      purifier.resourceProjections {
+    projections =
+      (purifier.nativeTargetProjections {
         producer = package;
-        roots = resourceRoots;
-        dependencies = resourceDependencies;
-        schema = resourceSchema;
+        targets = outputs.targets;
+        installedFiles = outputs.files;
+        system = stdenv.hostPlatform.system;
         inherit runCommand python3;
+      })
+      // lib.optionalAttrs (resourceRoots != { }) (
+        purifier.resourceProjections {
+          producer = package;
+          roots = resourceRoots;
+          dependencies = resourceDependencies;
+          schema = resourceSchema;
+          inherit runCommand python3;
+        }
+      );
+
+    package = stdenv.mkDerivation (
+      finalAttrs:
+      removeAttrs args [
+        "lockFile"
+        "fetchers"
+        "resourceRoots"
+        "resourceDependencies"
+        "resourceSchema"
+      ]
+      // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
+        # Replay listens only on loopback. Keep external outbound networking denied
+        # by the Nix sandbox, and preserve an explicit caller override.
+        __darwinAllowLocalNetworking = args.__darwinAllowLocalNetworking or true;
+      }
+      // {
+        inherit pname version src;
+        nativeBuildInputs = [
+          cmake
+          mitm-cache
+        ]
+        ++ nativeBuildInputs;
+        mitmCache = "${sources.tree}/http";
+        cmakeFlags = lock.cmakeFlags ++ cmakeFlags;
+        preConfigure = ''
+          # mitm-cache is the proxy of the whole build, the tests included.
+          # Requests to the machine itself, such as a test's own server, are
+          # no downloads, and go around it.
+          export no_proxy="localhost,127.0.0.1,::1" NO_PROXY="localhost,127.0.0.1,::1"
+          if [ "$(bash ${./definition-hash.sh} .)" != ${lib.escapeShellArg lock.definitionHash} ]; then
+            echo "cmake-purifier: ${toString lockFile} is older than the project: a CMakeLists.txt or *.cmake file changed since it was written. Run \`cmake-purifier lock\` to lock the project again." >&2
+            exit 1
+          fi
+          bash ${./write-cache.sh} ${sources.tree} "$NIX_BUILD_TOP/cmake-purifier/sources" "$NIX_BUILD_TOP/cmake-purifier/cache.cmake" \
+            ${../../cmake}/CMakePurifierLocked.cmake ${./.} ${git}/bin/git \
+            "${realTool "hg" mercurial "hg"}" "${
+              realTool "svn" subversion "svn"
+            }" "${realTool "cvs" cvs "cvs"}"
+          cmakeFlagsArray+=(-C "$NIX_BUILD_TOP/cmake-purifier/cache.cmake")
+        ''
+        # The ranlib of darwin, cctools' libtool, writes the ids of the build
+        # user into an archive's symbol table, and a darwin build runs as
+        # whichever build user is free. With -D it writes zeros, as llvm-ar
+        # does for the members. CMake runs RANLIB on each archive it makes and
+        # on its install, and the fixup again after strip.
+        + lib.optionalString stdenv.hostPlatform.isDarwin ''
+          printf '#!%s\nexec %q -D "$@"\n' "$BASH" "$(command -v "$RANLIB")" > "$NIX_BUILD_TOP/cmake-purifier/ranlib"
+          chmod +x "$NIX_BUILD_TOP/cmake-purifier/ranlib"
+          export RANLIB=$NIX_BUILD_TOP/cmake-purifier/ranlib
+        ''
+        + preConfigure;
+        lockedOutputs = lib.concatMapStrings (f: "${f}\n") outputs.files;
+        passAsFile = [ "lockedOutputs" ];
+        # The lock run builds without running the tests, so the lockfile
+        # holds no download of the tests. They run without mitm-cache as
+        # their proxy and without the exceptions to it, so that a test of a
+        # host that does not resolve, or of a proxy of its own, sees the
+        # sandbox without a network.
+        preCheck = ''
+          unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY no_proxy NO_PROXY
+        ''
+        + preCheck;
+        postInstall = postInstall + ''
+          missing=0
+          while IFS= read -r file; do
+            if [ ! -e "$out/$file" ] && [ ! -L "$out/$file" ]; then
+              echo "cmake-purifier: the lockfile names the output $file, which the install did not write. Run \`cmake-purifier lock\` again." >&2
+              missing=1
+            fi
+          done < "$lockedOutputsPath"
+          [ "$missing" = 0 ]
+        '';
+        passthru = passthru // {
+          inherit sources projections;
+          installed = lib.genAttrs outputs.files (file: "${finalAttrs.finalPackage}/${file}");
+          targets = builtins.mapAttrs (
+            _: target:
+            target
+            // {
+              files = map (file: "${finalAttrs.finalPackage}/${file}") target.files;
+            }
+          ) outputs.targets;
+        };
       }
     );
+  in
+  {
+    packages.${pname} = package;
+    inherit projections;
 
-  package = stdenv.mkDerivation (
-    finalAttrs:
-    removeAttrs args [
-      "lockFile"
-      "fetchers"
-      "resourceRoots"
-      "resourceDependencies"
-      "resourceSchema"
-    ]
-    // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
-      # Replay listens only on loopback. Keep external outbound networking denied
-      # by the Nix sandbox, and preserve an explicit caller override.
-      __darwinAllowLocalNetworking = args.__darwinAllowLocalNetworking or true;
-    }
-    // {
-      inherit pname version src;
-      nativeBuildInputs = [
-        cmake
-        mitm-cache
-      ]
-      ++ nativeBuildInputs;
-      mitmCache = "${sources.tree}/http";
-      cmakeFlags = lock.cmakeFlags ++ cmakeFlags;
-      preConfigure = ''
-        # mitm-cache is the proxy of the whole build, the tests included.
-        # Requests to the machine itself, such as a test's own server, are
-        # no downloads, and go around it.
-        export no_proxy="localhost,127.0.0.1,::1" NO_PROXY="localhost,127.0.0.1,::1"
-        if [ "$(bash ${./definition-hash.sh} .)" != ${lib.escapeShellArg lock.definitionHash} ]; then
-          echo "cmake-purifier: ${toString lockFile} is older than the project: a CMakeLists.txt or *.cmake file changed since it was written. Run \`cmake-purifier lock\` to lock the project again." >&2
-          exit 1
-        fi
-        bash ${./write-cache.sh} ${sources.tree} "$NIX_BUILD_TOP/cmake-purifier/sources" "$NIX_BUILD_TOP/cmake-purifier/cache.cmake" \
-          ${../../cmake}/CMakePurifierLocked.cmake ${./.} ${git}/bin/git \
-          "${realTool "hg" mercurial "hg"}" "${
-            realTool "svn" subversion "svn"
-          }" "${realTool "cvs" cvs "cvs"}"
-        cmakeFlagsArray+=(-C "$NIX_BUILD_TOP/cmake-purifier/cache.cmake")
-      ''
-      # The ranlib of darwin, cctools' libtool, writes the ids of the build
-      # user into an archive's symbol table, and a darwin build runs as
-      # whichever build user is free. With -D it writes zeros, as llvm-ar
-      # does for the members. CMake runs RANLIB on each archive it makes and
-      # on its install, and the fixup again after strip.
-      + lib.optionalString stdenv.hostPlatform.isDarwin ''
-        printf '#!%s\nexec %q -D "$@"\n' "$BASH" "$(command -v "$RANLIB")" > "$NIX_BUILD_TOP/cmake-purifier/ranlib"
-        chmod +x "$NIX_BUILD_TOP/cmake-purifier/ranlib"
-        export RANLIB=$NIX_BUILD_TOP/cmake-purifier/ranlib
-      ''
-      + preConfigure;
-      lockedOutputs = lib.concatMapStrings (f: "${f}\n") outputs.files;
-      passAsFile = [ "lockedOutputs" ];
-      # The lock run builds without running the tests, so the lockfile
-      # holds no download of the tests. They run without mitm-cache as
-      # their proxy and without the exceptions to it, so that a test of a
-      # host that does not resolve, or of a proxy of its own, sees the
-      # sandbox without a network.
-      preCheck = ''
-        unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY no_proxy NO_PROXY
-      ''
-      + preCheck;
-      postInstall = postInstall + ''
-        missing=0
-        while IFS= read -r file; do
-          if [ ! -e "$out/$file" ] && [ ! -L "$out/$file" ]; then
-            echo "cmake-purifier: the lockfile names the output $file, which the install did not write. Run \`cmake-purifier lock\` again." >&2
-            missing=1
-          fi
-        done < "$lockedOutputsPath"
-        [ "$missing" = 0 ]
-      '';
-      passthru = passthru // {
-        inherit sources projections;
-        installed = lib.genAttrs outputs.files (file: "${finalAttrs.finalPackage}/${file}");
-        targets = builtins.mapAttrs (
-          _: target:
-          target
-          // {
-            files = map (file: "${finalAttrs.finalPackage}/${file}") target.files;
-          }
-        ) outputs.targets;
-      };
-    }
-  );
-in
-{
-  packages.${pname} = package;
-  inherit projections;
+    tests = package.overrideAttrs {
+      pname = "${pname}-tests";
+      doCheck = true;
+    };
 
-  tests = package.overrideAttrs {
-    pname = "${pname}-tests";
-    doCheck = true;
-  };
+    release =
+      runCommand "${pname}-${version}-release"
+        {
+          nativeBuildInputs = [ gnutar ];
+        }
+        ''
+          mkdir $out
+          tar --sort=name --mtime=@1 --owner=0 --group=0 --numeric-owner -C ${package} -cf - . |
+            gzip -9n > $out/${pname}-${version}-${stdenv.hostPlatform.system}.tar.gz
+        '';
 
-  release =
-    runCommand "${pname}-${version}-release"
-      {
-        nativeBuildInputs = [ gnutar ];
-      }
-      ''
-        mkdir $out
-        tar --sort=name --mtime=@1 --owner=0 --group=0 --numeric-owner -C ${package} -cf - . |
-          gzip -9n > $out/${pname}-${version}-${stdenv.hostPlatform.system}.tar.gz
-      '';
-
-  fetches = sources.memory.entries;
-}
+    fetches = sources.memory.entries;
+  }

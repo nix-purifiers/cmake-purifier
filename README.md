@@ -390,3 +390,78 @@ this resource mechanism but need their own native compiler/runtime validation.
 
 The purifier idea was inspired by nixcloud's
 [cargo (libnix)](https://github.com/nixcloud/cargo).
+
+### Historical CMake
+
+An explicitly selected `legacy-external-v1` profile has executed CMake
+2.8.12.2 and 3.0.2 on x86_64 Linux. These are measured points, not a version
+range. The default profile and format-3 locks keep the modern
+FetchContent behavior. The historical profile records actual HTTP download
+URLs and body hashes through the existing proxy, including downloads made
+by nested `ExternalProject` builds. Native CMake performs its own
+`URL_HASH` checks, extraction, dependency ordering, build, CTest and install.
+It records the installed files from the native install manifest.
+
+Supply the SDK as a derivation in the consumer's Nix source, with its source
+archive identity, and select the same scope for the command and builder:
+
+```nix
+legacy = pkgs.cmake-purifier.overrideScope (_: _: {
+  nativeProfile = "legacy-external-v1";
+  cmake = cmake28;
+  legacyProjectName = "my_project"; # The root project's exact native name.
+  legacySdkAdapter = {
+    version = 1;
+    package = cmake28;
+    moduleRoot = "share/cmake-2.8"; # Relative to this selected SDK.
+    source = {
+      url = "https://cmake.org/files/v2.8/cmake-2.8.12.2.tar.gz";
+      sha256 = "8c6574e9afabcb9fc66f463bb1f2f051958d86c85c37fccf067eb1a44a120e5e";
+    };
+  };
+});
+# Use legacy.cmake-purifier in the development environment, and:
+project = legacy.buildCMakeProject { src = ./.; };
+```
+
+The SDK must contain its real executable and module tree; a launcher that
+runs another package's executable fails the startup identity check. The
+command checks the native executable through `/proc`, its module root,
+full version and root project. The adapter owns a safe relative module path
+(`share/cmake-3.0` for the 3.0.2 fixture). Locks record that live scope's identity and never
+reconstruct an SDK from a serialized path. Changing SDK scope requires a
+new capture into a new `--lockfile`; an existing lock never silently changes
+its SDK.
+
+`lock -S <source>` runs the full native lifecycle. Configure definitions use
+`-Dname=value`; their argument values are preserved. The measured SDKs cannot
+persist newline definitions in their caches, so the profile rejects those
+definitions.
+Definitions replacing the observation or install context are also rejected.
+`lock` keeps a previous lock intact on failure or changed bytes at a locked
+URL; `update` explicitly accepts changed downloads after the native build
+and hash checks pass. There is no named-dependency update selector.
+
+`prefetch` fetches the observed archives through Nix. With the origin stopped,
+use `replay -S <source> -- <command>` around the native configure/build/test
+loop. Replay requires the prefetched tree to match the current lock.
+`buildCMakeProject` uses the same selected SDK and locked archives in the Nix
+sandbox, checks the install manifest, and provides an installed-tree release
+archive. The profile requires a working native install target; it does not
+provide `--no-build`, publishing, resource projections or extra configure
+flags on the builder.
+
+Historical locks have a separate closed format 4. They explicitly set
+`dependencyMetadataAvailable = false` and `targetMetadataAvailable = false`:
+observed downloads are an acquisition closure, not a named dependency
+model. There is no File API target metadata; target/native projections fail
+with an unavailable-metadata error. Installed file paths remain available.
+No original publication-byte parity, arbitrary code confinement, general
+proxy-bypass detection, additional SDK points, historical Darwin or a version range is
+claimed. HTTPS also depends on the selected old SDK's native TLS support;
+the repeatable legacy fixture exercises HTTP.
+
+The consumer SDK recipe and repeatable original-source fixture are in
+`tests/legacy-external`. They cover nested downloads, deterministic and
+relocated relock, source preservation, native SDK origins at three levels,
+installed consumers, cold replay, pure builds and failure controls.
