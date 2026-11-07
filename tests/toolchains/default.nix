@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MIT
+# Source-built SDKs selected independently of the purifier's ambient nixpkgs.
+# Hashes come from Kitware's per-release SHA-256 manifests in sources.json.
+{ pkgs }:
+pkgs.lib.mapAttrs (
+  version: source:
+  pkgs.cmake.overrideAttrs (previous: {
+    inherit version;
+    # Same nixpkgs prefix lookup, rebased onto the 3.31 source layout.
+    # The ambient nixpkgs patch removing system search paths is tied to
+    # its own module layout. Keep functional Nix prefix/SDK patches for
+    # other releases; the build checks still run in the Nix sandbox.
+    patches =
+      map
+        (
+          patch:
+          if
+            pkgs.lib.versionOlder version "4" && builtins.baseNameOf patch == "nixpkgs-cmake-prefix-path.patch"
+          then
+            ./cmake3-prefix.patch
+          else
+            patch
+        )
+        (
+          builtins.filter (
+            patch: version == "4.4.5" || builtins.baseNameOf patch != "remove-impure-search-paths.patch"
+          ) previous.patches
+        );
+    src = pkgs.fetchurl {
+      inherit (source) url sha256;
+    };
+  })
+) (builtins.fromJSON (builtins.readFile ./sources.json))

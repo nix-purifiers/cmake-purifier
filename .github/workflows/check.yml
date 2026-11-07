@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, ubuntu-24.04-arm]
+        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-15]
         job: [flake-check, conformance-relock, conformance-rebuild, conformance-offline, conformance-update, commands]
     name: ${{ matrix.job }} (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
@@ -53,6 +53,16 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
             sandbox = true
+      - name: Record the native platform and source
+        run: |
+          git rev-parse HEAD
+          uname -a
+          system=$(nix eval --impure --raw --expr builtins.currentSystem)
+          echo "Nix system: $system"
+          if [ "${{ matrix.runner }}" = macos-15 ]; then
+            test "$system" = aarch64-darwin
+            test "$(uname -m)" = arm64
+          fi
       - name: Build the flake checks
         if: matrix.job == 'flake-check'
         run: |
@@ -76,7 +86,9 @@ jobs:
         run: |
           # Ubuntu's AppArmor stops unprivileged user namespaces, which
           # unshare needs for the namespace without a network.
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          if [ "$(uname -s)" = Linux ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
           # The fetches of the vcs and cvs fixtures read their repositories
           # from the store, where the flake checks `vcs` and `cvs` put them.
           system=$(nix eval --impure --raw --expr builtins.currentSystem)
@@ -88,3 +100,75 @@ jobs:
       - name: Run the command tests
         if: matrix.job == 'commands'
         run: tests/negative.sh
+
+  supported-toolchains:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, macos-15]
+        version: [3.31.12, 4.3.6, 4.4.5, 4.5.0-rc3]
+    name: CMake ${{ matrix.version }} (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            sandbox = true
+      - name: Verify platform and exercise the selected SDK
+        env:
+          CMAKE_PURIFIER_REQUIRE_OFFLINE: 1
+        run: |
+          git rev-parse HEAD
+          system=$(nix eval --impure --raw --expr builtins.currentSystem)
+          if [ "${{ matrix.runner }}" = macos-15 ]; then
+            test "$system" = aarch64-darwin
+            test "$(uname -m)" = arm64
+          else
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          tests/toolchains/check.sh '${{ matrix.version }}'
+          key=$(echo '${{ matrix.version }}' | tr . _)
+          nix build --option allow-import-from-derivation false --no-link -L ".#checks.$system.sdk-basic-$key"
+          nix derivation show ".#checks.$system.sdk-basic-$key"
+          nix path-info --json ".#checks.$system.sdk-basic-$key"
+
+  independent-sample:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, macos-15]
+    name: spdlog lifecycle (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            sandbox = true
+      - name: Lock, prefetch, test offline, and switch installed consumers
+        env:
+          CMAKE_PURIFIER_REQUIRE_OFFLINE: 1
+        run: |
+          git rev-parse HEAD
+          system=$(nix eval --impure --raw --expr builtins.currentSystem)
+          if [ "${{ matrix.runner }}" = macos-15 ]; then
+            test "$system" = aarch64-darwin
+            test "$(uname -m)" = arm64
+          else
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          tests/real-world/spdlog/check.sh
+          nix build --option allow-import-from-derivation false --no-link -L ".#checks.$system.real-world-spdlog-consumer"
+          nix derivation show ".#checks.$system.real-world-spdlog-consumer"
+          nix path-info --json ".#checks.$system.real-world-spdlog-consumer"

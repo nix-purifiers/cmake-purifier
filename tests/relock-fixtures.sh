@@ -16,7 +16,7 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 system=$(nix eval --impure --raw --expr builtins.currentSystem)
 
 lock() {
-  nix shell 'nixpkgs#gcc' 'nixpkgs#gnumake' "$root#cmake-purifier" -c cmake-purifier lock "$@"
+  nix shell "$root#test-tools" -c cmake-purifier lock "$@"
 }
 
 lock -S "$root/tests/fixtures/basic"
@@ -44,7 +44,7 @@ GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=alway
   -DPURIFIER_GIT_URL="file://$repos/git/super.git"
 if [ "$repos" != "$committedRepos" ]; then
   normalize() {
-    nix shell 'nixpkgs#jq' -c jq -S 'del(.contentHash)' "$1" | sed "s|$repos|$committedRepos|g"
+    nix shell "$root#test-tools" -c jq -S 'del(.contentHash)' "$1" | sed "s|$repos|$committedRepos|g"
   }
   if ! diff <(normalize "$scratch/vcs.lock.json") <(normalize "$vcsLock"); then
     echo "relock: the vcs fixture locks differently on $system" >&2

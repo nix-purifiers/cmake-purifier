@@ -1,0 +1,57 @@
+--- a/test/abstractServer.hpp
++++ b/test/abstractServer.hpp
+@@ -57,7 +57,7 @@
+     std::shared_ptr<std::thread> serverThread{nullptr};
+     std::mutex server_mutex;
+     std::condition_variable server_start_cv;
+-    std::condition_variable server_stop_cv;
++    bool server_started{false};
+     std::atomic<bool> should_run{false};
+     std::set<int> unique_connections;
+
+--- a/test/abstractServer.cpp
++++ b/test/abstractServer.cpp
+@@ -10,17 +10,18 @@
+ }
+
+ void AbstractServer::Start() {
++    std::unique_lock<std::mutex> server_lock(server_mutex);
++    server_started = false;
+     should_run = true;
+     serverThread = std::make_shared<std::thread>(&AbstractServer::Run, this);
+-    serverThread->detach();
+-    std::unique_lock<std::mutex> server_lock(server_mutex);
+-    server_start_cv.wait(server_lock);
++    server_start_cv.wait(server_lock, [this] { return server_started; });
+ }
+
+ void AbstractServer::Stop() {
+     should_run = false;
+-    std::unique_lock<std::mutex> server_lock(server_mutex);
+-    server_stop_cv.wait(server_lock);
++    if (serverThread && serverThread->joinable()) {
++        serverThread->join();
++    }
+ }
+
+ static void EventHandler(mg_connection* conn, int event, void* event_data) {
+@@ -48,6 +49,10 @@
+     initServer(&mgr, EventHandler);
+
+     // Notify the main thread that the server is up and runing:
++    {
++        std::lock_guard<std::mutex> server_lock(server_mutex);
++        server_started = true;
++    }
+     server_start_cv.notify_all();
+
+     // Main server loop:
+@@ -60,8 +65,6 @@
+     timer_args.clear();
+     mg_mgr_free(&mgr);
+
+-    // Notify the main thread that we have shut down everything:
+-    server_stop_cv.notify_all();
+ }
+
+ void AbstractServer::AddConnection(int remote_port) {

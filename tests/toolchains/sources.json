@@ -1,0 +1,22 @@
+{
+  "3.31.12": {
+    "url": "https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12.tar.gz",
+    "sha256": "5f3fd5a54dfa65602bdbed64f981a72673cc19f2d304cc2955cf0dfa0cfd8272",
+    "manifest": "https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-SHA-256.txt"
+  },
+  "4.3.6": {
+    "url": "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6.tar.gz",
+    "sha256": "52203d4b31fdb20e8b8b630b98f6381f1d037fd2c1eb758d4271455f132d1eed",
+    "manifest": "https://github.com/Kitware/CMake/releases/download/v4.3.6/cmake-4.3.6-SHA-256.txt"
+  },
+  "4.4.5": {
+    "url": "https://github.com/Kitware/CMake/releases/download/v4.4.5/cmake-4.4.5.tar.gz",
+    "sha256": "a0c54c88abb8078dd8eccadb717fc6bb194bf18e7d44c86309910288886e04e2",
+    "manifest": "https://github.com/Kitware/CMake/releases/download/v4.4.5/cmake-4.4.5-SHA-256.txt"
+  },
+  "4.5.0-rc3": {
+    "url": "https://github.com/Kitware/CMake/releases/download/v4.5.0-rc3/cmake-4.5.0-rc3.tar.gz",
+    "sha256": "ffc65d0e4bead75cad03576ecb0b695b3f8db12e9585ff83bf511eb6299c9954",
+    "manifest": "https://github.com/Kitware/CMake/releases/download/v4.5.0-rc3/cmake-4.5.0-rc3-SHA-256.txt"
+  }
+}

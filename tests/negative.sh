@@ -24,7 +24,7 @@ trap 'chmod -R u+w "$scratch"; rm -rf "$scratch"' EXIT
 system=$(nix eval --impure --raw --expr builtins.currentSystem)
 
 run() {
-  nix shell 'nixpkgs#gcc' 'nixpkgs#gnumake' 'nixpkgs#cmake' 'nixpkgs#jq' "$root#cmake-purifier" -c "$@"
+  nix shell "$root#test-tools" -c "$@"
 }
 
 # Copies the basic fixture to $scratch/<name> and prints its path.

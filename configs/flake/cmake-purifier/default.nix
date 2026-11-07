@@ -9,6 +9,7 @@
 {
 
   imports = [
+    ../../../tests/toolchains/module.nix
     inputs.flake-parts.flakeModules.partitions
     closure-lib.caisson.modules.flake."purifier/purifier-packages"
   ];
