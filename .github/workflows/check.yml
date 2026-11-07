@@ -62,7 +62,18 @@ jobs:
         if: always()
         with:
           name: cmake-legacy-native-${{ matrix.sdk }}-x86_64-linux
-          path: ${{ runner.temp }}/legacy-cmake-evidence
+          path: |
+            ${{ runner.temp }}/legacy-cmake-evidence/tools.txt
+            ${{ runner.temp }}/legacy-cmake-evidence/pure-paths.txt
+            ${{ runner.temp }}/legacy-cmake-evidence/rebuild.log
+            ${{ runner.temp }}/legacy-cmake-evidence/targets.log
+            ${{ runner.temp }}/legacy-cmake-evidence/projections.log
+            ${{ runner.temp }}/legacy-cmake-evidence/native/*.log
+            ${{ runner.temp }}/legacy-cmake-evidence/native/*.json
+            ${{ runner.temp }}/legacy-cmake-evidence/native/source/cmake-purifier.lock.json
+            ${{ runner.temp }}/legacy-cmake-evidence/native/relocated/cmake-purifier.lock.json
+            ${{ runner.temp }}/legacy-cmake-evidence/native/native-install/share/legacy-proof/*-identity.json
+            ${{ runner.temp }}/legacy-cmake-evidence/native/cold-install/share/legacy-proof/*-identity.json
           if-no-files-found: error
   check:
     strategy:
