@@ -126,24 +126,27 @@ let
     in
     builtins.substring 0 200 nonEmpty;
 in
-{
-  purifier = "cmake-purifier";
-  entries = if usable then file.artifacts else [ ];
-  outputs = if usable && file.outputs != null then { ${file.project.name} = file.outputs; } else { };
-  inherit problems;
+if builtins.isAttrs file && (file.version or null) == 4 then
+  import ./legacy-lock.nix { inherit src lockFile; }
+else
+  {
+    purifier = "cmake-purifier";
+    entries = if usable then file.artifacts else [ ];
+    outputs = if usable && file.outputs != null then { ${file.project.name} = file.outputs; } else { };
+    inherit problems;
 
-  cmake = file // {
-    inherit storeName;
+    cmake = file // {
+      inherit storeName;
 
-    # The fetch name of an artifact: the last component of its path, made a
-    # valid store name.
-    artifactName = artifact: storeName (baseNameOf artifact.path);
+      # The fetch name of an artifact: the last component of its path, made a
+      # valid store name.
+      artifactName = artifact: storeName (baseNameOf artifact.path);
 
-    artifactsByPath = builtins.listToAttrs (
-      map (a: {
-        name = a.path;
-        value = a;
-      }) file.artifacts
-    );
-  };
-}
+      artifactsByPath = builtins.listToAttrs (
+        map (a: {
+          name = a.path;
+          value = a;
+        }) file.artifacts
+      );
+    };
+  }
