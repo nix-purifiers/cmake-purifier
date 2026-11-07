@@ -24,5 +24,5 @@ offline cmake -S "$scratch/basic" -B "$scratch/basic/build" -C "$scratch/basic/.
 offline cmake --build "$scratch/basic/build" -j2
 offline ctest --test-dir "$scratch/basic/build" --output-on-failure
 [ "$(offline "$scratch/basic/build/greet" --name "$version")" = "Hello, $version!" ]
-nix build --option allow-import-from-derivation false --no-link -L "$root#test-basic-$key"
+nix build --option sandbox true --option allow-import-from-derivation false --no-link -L "$root#test-basic-$key"
 echo "toolchain $version: lock/prefetch/offline/pure build passed"
