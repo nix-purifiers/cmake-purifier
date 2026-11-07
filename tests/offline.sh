@@ -20,37 +20,17 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 scratch=$(mktemp -d)
 trap 'chmod -R u+w "$scratch"; rm -rf "$scratch"' EXIT
 
-# The tools of the loop, built with the network, so that the loop itself
-# needs no Nix. unshare and ip, for the namespace, are Linux tools.
-netTools=()
-if [ "$(uname -s)" = Linux ]; then
-  netTools=('nixpkgs#iproute2' 'nixpkgs#util-linux')
-fi
-tools=$(nix build --no-link --print-out-paths 'nixpkgs#gcc' 'nixpkgs#gnumake' 'nixpkgs#cmake' \
-  'nixpkgs#clang-tools' ${netTools[@]+"${netTools[@]}"} "$root#cmake-purifier")
-# $tools is one store path per line, which the split makes arguments.
-# shellcheck disable=SC2086
-loopPath=$(printf '%s/bin:' $tools)$PATH
-
-if PATH=$loopPath unshare -rn true 2> /dev/null; then
-  offline() {
-    PATH=$loopPath unshare -rn bash -c 'ip link set lo up && exec "$@"' offline "$@"
-  }
-elif [ "${CMAKE_PURIFIER_REQUIRE_OFFLINE:-}" = 1 ]; then
-  echo "offline: unshare cannot make a network namespace here" >&2
-  exit 1
-else
-  echo "offline: unshare cannot make a network namespace here; the loop runs on the host's network" >&2
-  offline() {
-    PATH=$loopPath "$@"
-  }
-fi
+# Resolve all tools from the repository's locked package set.
+tools=$(nix build --no-link --print-out-paths "$root#test-tools")
+export PATH="$tools/bin:$PATH"
+# shellcheck source=tests/offline-runner.sh
+source "$root/tests/offline-runner.sh"
 
 # Copies a fixture to $scratch/<name> and prefetches it, with the network.
 prefetch() {
   cp -r "$root/tests/fixtures/$1" "$scratch/$1"
   chmod -R u+w "$scratch/$1"
-  PATH=$loopPath cmake-purifier prefetch -S "$scratch/$1"
+  cmake-purifier prefetch -S "$scratch/$1"
 }
 
 prefetch basic
@@ -62,7 +42,7 @@ offline cmake -S "$basic" -B "$basic/build" -C "$basic/.cmake-purifier/initial-c
 # clangd asks the compiler for its include paths.
 clangdArgs=()
 if [ "$(uname -s)" = Darwin ]; then
-  clangdArgs=("--query-driver=$(dirname "$(PATH=$loopPath command -v c++)")/*")
+  clangdArgs=("--query-driver=$(dirname "$(command -v c++)")/*")
 fi
 offline clangd --check="$basic/main.cpp" --compile-commands-dir="$basic/build" ${clangdArgs[@]+"${clangdArgs[@]}"} \
   > "$scratch/clangd.log" 2>&1 || {

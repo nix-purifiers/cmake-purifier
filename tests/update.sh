@@ -25,10 +25,8 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 scratch=$(mktemp -d)
 trap 'chmod -R u+w "$scratch"; rm -rf "$scratch"' EXIT
 
-tools=$(nix build --no-link --print-out-paths 'nixpkgs#gcc' 'nixpkgs#gnumake' 'nixpkgs#cmake' 'nixpkgs#git' 'nixpkgs#jq' "$root#cmake-purifier")
-# $tools is one store path per line, which the split makes arguments.
-# shellcheck disable=SC2086
-PATH=$(printf '%s/bin:' $tools)$PATH
+tools=$(nix build --no-link --print-out-paths "$root#test-tools")
+export PATH="$tools/bin:$PATH"
 export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=test@example.invalid GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=test@example.invalid
 export GIT_CONFIG_NOSYSTEM=1
 

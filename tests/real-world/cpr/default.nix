@@ -38,6 +38,9 @@ buildCMakeProject {
     buildInputs
     ;
   lockFile = ./cmake-purifier.lock.json;
+  # The upstream test server could notify before Start/Stop began waiting,
+  # hanging a whole suite. Use a predicate and join without skipping tests.
+  patches = [ ./server-synchronization.patch ];
   # The test suites each start a server on the same fixed port, so they
   # run one at a time. Two suites fail only some of the time in the
   # sandbox: cpr_connection_pool_tests with a segmentation fault, and

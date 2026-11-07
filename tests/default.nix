@@ -405,6 +405,7 @@ in
   # The command builds, which runs shellcheck on it.
   inherit cmake-purifier;
 }
+// (import ./toolchains/checks.nix { inherit pkgs buildCMakeProject; })
 // (
   if vcsRepos.cvsWorks then
     {

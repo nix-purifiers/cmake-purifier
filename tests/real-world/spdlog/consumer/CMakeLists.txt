@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(spdlog_consumer LANGUAGES CXX)
+find_package(spdlog 1.15.3 REQUIRED CONFIG)
+add_executable(consumer main.cpp)
+target_link_libraries(consumer PRIVATE spdlog::spdlog)
