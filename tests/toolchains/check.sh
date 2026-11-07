@@ -24,7 +24,7 @@ if [ "$(uname -s)" = Darwin ]; then
   echo "Darwin SDKROOT=$SDKROOT, DEVELOPER_DIR=$DEVELOPER_DIR, compiler=$(readlink -f "$(command -v c++)")"
   c++ -### -x c++ -c /dev/null > "$scratch/compiler.log" 2>&1
   cat "$scratch/compiler.log"
-  grep -F -- "\"-isysroot\" \"$SDKROOT\"" "$scratch/compiler.log"
+  grep -F -- "\"-isysroot\" \"$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk\"" "$scratch/compiler.log"
 fi
 cp -r "$root/tests/fixtures/basic" "$scratch/basic"
 chmod -R u+w "$scratch/basic"
