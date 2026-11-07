@@ -19,14 +19,15 @@ pkgs.lib.mapAttrs (
           then
             ./cmake3-prefix.patch
           else if
-            pkgs.lib.versionOlder version "4" && builtins.baseNameOf patch == "darwin-binary-paths.patch"
+            pkgs.lib.versionOlder version "4" && pkgs.lib.hasSuffix "darwin-binary-paths.patch" (toString patch)
           then
             pkgs.replaceVars ./cmake3-darwin-binary-paths.patch {
               sw_vers = pkgs.lib.getExe' pkgs.darwin.DarwinTools "sw_vers";
               vm_stat = pkgs.lib.getExe' pkgs.darwin.system_cmds "vm_stat";
             }
           else if
-            pkgs.lib.versionOlder version "4" && builtins.baseNameOf patch == "darwin-bsd-binary-paths.patch"
+            pkgs.lib.versionOlder version "4"
+            && pkgs.lib.hasSuffix "darwin-bsd-binary-paths.patch" (toString patch)
           then
             pkgs.replaceVars ./cmake3-darwin-bsd-binary-paths.patch {
               ps = pkgs.lib.getExe pkgs.ps;
