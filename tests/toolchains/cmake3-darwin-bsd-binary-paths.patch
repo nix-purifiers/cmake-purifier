@@ -1,0 +1,67 @@
+--- a/Modules/CMakeDetermineSystem.cmake
++++ b/Modules/CMakeDetermineSystem.cmake
+@@ -68,7 +68,7 @@
+       endif()
+       if(_CMAKE_APPLE_SILICON_PROCESSOR)
+         if(";${_CMAKE_APPLE_SILICON_PROCESSOR};" MATCHES "^;(arm64|x86_64);$")
+-          execute_process(COMMAND sysctl -q hw.optional.arm64
++          execute_process(COMMAND @sysctl@ -q hw.optional.arm64
+             OUTPUT_VARIABLE _sysctl_stdout
+             ERROR_VARIABLE _sysctl_stderr
+             RESULT_VARIABLE _sysctl_result
+--- a/Modules/Platform/Darwin-Initialize.cmake
++++ b/Modules/Platform/Darwin-Initialize.cmake
+@@ -26,7 +26,7 @@
+ if(NOT CMAKE_CROSSCOMPILING AND
+    CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND
+    CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(arm64|x86_64)$")
+-  execute_process(COMMAND sysctl -q hw.optional.arm64
++  execute_process(COMMAND @sysctl@ -q hw.optional.arm64
+     OUTPUT_VARIABLE _sysctl_stdout
+     ERROR_VARIABLE _sysctl_stderr
+     RESULT_VARIABLE _sysctl_result
+--- a/Modules/ProcessorCount.cmake
++++ b/Modules/ProcessorCount.cmake
+@@ -66,8 +66,7 @@
+
+   if(NOT count)
+     # Mac, FreeBSD, OpenBSD (systems with sysctl):
+-    find_program(ProcessorCount_cmd_sysctl sysctl
+-      PATHS /usr/sbin /sbin)
++    set(ProcessorCount_cmd_sysctl @sysctl@)
+     mark_as_advanced(ProcessorCount_cmd_sysctl)
+     if(ProcessorCount_cmd_sysctl)
+       execute_process(COMMAND ${ProcessorCount_cmd_sysctl} -n hw.ncpu
+--- a/Source/kwsys/ProcessUNIX.c
++++ b/Source/kwsys/ProcessUNIX.c
+@@ -2501,7 +2501,7 @@
+    have two integers to store: the pid and then the ppid.  */
+ #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) ||       \
+   defined(__OpenBSD__) || defined(__GLIBC__) || defined(__GNU__)
+-#  define KWSYSPE_PS_COMMAND "ps axo pid,ppid"
++#  define KWSYSPE_PS_COMMAND "@ps@ axo pid,ppid"
+ #  define KWSYSPE_PS_FORMAT "%d %d\n"
+ #elif defined(__sun) && (defined(__SVR4) || defined(__svr4__)) /* Solaris */
+ #  define KWSYSPE_PS_COMMAND "ps -e -o pid,ppid"
+--- a/Source/kwsys/SystemInformation.cxx
++++ b/Source/kwsys/SystemInformation.cxx
+@@ -3848,7 +3848,7 @@
+   long long memUsed = 0;
+   pid_t pid = getpid();
+   std::ostringstream oss;
+-  oss << "ps -o rss= -p " << pid;
++  oss << "@ps@ -o rss= -p " << pid;
+   FILE* file = popen(oss.str().c_str(), "r");
+   if (!file) {
+     return -1;
+--- a/Tests/CMakeLists.txt
++++ b/Tests/CMakeLists.txt
+@@ -216,7 +216,7 @@
+   endif()
+
+   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT DEFINED CMake_TEST_APPLE_SILICON)
+-    execute_process(COMMAND sysctl -q hw.optional.arm64
++    execute_process(COMMAND @sysctl@ -q hw.optional.arm64
+       OUTPUT_VARIABLE _sysctl_stdout
+       ERROR_VARIABLE  _sysctl_stderr
+       RESULT_VARIABLE _sysctl_result

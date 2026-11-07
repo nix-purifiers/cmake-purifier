@@ -18,6 +18,20 @@ pkgs.lib.mapAttrs (
             pkgs.lib.versionOlder version "4" && builtins.baseNameOf patch == "nixpkgs-cmake-prefix-path.patch"
           then
             ./cmake3-prefix.patch
+          else if
+            pkgs.lib.versionOlder version "4" && builtins.baseNameOf patch == "darwin-binary-paths.patch"
+          then
+            pkgs.replaceVars ./cmake3-darwin-binary-paths.patch {
+              sw_vers = pkgs.lib.getExe' pkgs.darwin.DarwinTools "sw_vers";
+              vm_stat = pkgs.lib.getExe' pkgs.darwin.system_cmds "vm_stat";
+            }
+          else if
+            pkgs.lib.versionOlder version "4" && builtins.baseNameOf patch == "darwin-bsd-binary-paths.patch"
+          then
+            pkgs.replaceVars ./cmake3-darwin-bsd-binary-paths.patch {
+              ps = pkgs.lib.getExe pkgs.ps;
+              sysctl = pkgs.lib.getExe pkgs.sysctl;
+            }
           else
             patch
         )
