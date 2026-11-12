@@ -34,13 +34,16 @@ for index,case in enumerate(spec['versions']):
  shutil.copyfile(package/'package/browser/runtime.mjs',web/'runtime.mjs');assert (web/'runtime.mjs').read_bytes()==(Path(case['web'])/'runtime.mjs').read_bytes()
  html="<p id='answer'>pending</p><script type='module'>import {proof} from './"+first+"';import {proof as extra} from './"+other+"';import {ByteBuffer} from './runtime.mjs';const bytes=new Uint8Array("+json.dumps(list(bytes.fromhex(cpp_result[2])))+");const answer=Number(proof.Envelope.getRootAsEnvelope(new ByteBuffer(bytes)).value().answer());if(answer!==42||!extra.Packet)throw Error('browser');document.getElementById('answer').textContent=String(answer);</script>"
  (web/'index.html').write_text(html)
- class Handler(http.server.SimpleHTTPRequestHandler):
-  def log_message(self,*args):pass
- server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Handler,directory=str(web)));thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
- try:
-  browser=subprocess.run([spec['chromium'],'--headless','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--disable-extensions','--user-data-dir='+str(root/'chromium-profile'),'--virtual-time-budget=3000','--dump-dom','http://127.0.0.1:'+str(server.server_port)+'/index.html'],capture_output=True,text=True,timeout=45)
-  assert browser.returncode==0 and 'id="answer">42</p>' in browser.stdout,(browser.stdout,browser.stderr)
- finally:server.shutdown();server.server_close();thread.join()
+ browser_dom=None
+ if spec['chromium'] is not None:
+  class Handler(http.server.SimpleHTTPRequestHandler):
+   def log_message(self,*args):pass
+  server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Handler,directory=str(web)));thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+  try:
+   browser=subprocess.run([spec['chromium'],'--headless','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--disable-extensions','--user-data-dir='+str(root/'chromium-profile'),'--virtual-time-budget=3000','--dump-dom','http://127.0.0.1:'+str(server.server_port)+'/index.html'],capture_output=True,text=True,timeout=45)
+   assert browser.returncode==0 and 'id="answer">42</p>' in browser.stdout,(browser.stdout,browser.stderr)
+  finally:server.shutdown();server.server_close();thread.join()
+  browser_dom=browser.stdout
  with zipfile.ZipFile(case['javaResources']) as jar:
   for entry,bundle in (model['browserBundles']|{'runtime':model['browserRuntimeBundle']}).items():assert jar.read(Path(bundle['file']).name)==(package/'package'/bundle['file']).read_bytes()
  java_results=[]
@@ -81,7 +84,7 @@ for index,case in enumerate(spec['versions']):
   assert subprocess.check_output(['java','-cp',java_classes,'ResourceConsumer',str(by_artifact['proof-schemas']),str(manifest),prefix,str(by_artifact['answer']),str(by_artifact['flatbuffers-java']),cpp_result[2]],text=True).strip()=='3'
   java_results.append({'repository':'combined-maven','coordinates':coordinates,'resolvedSha256':{key:sha(value) for key,value in by_artifact.items()},'resourceCount':3,'nativeJavaDecodedAnswer':42,'classOriginsVerified':True})
  native=json.loads(run(['npm','ls','--all','--omit=dev','--json']));assert native['dependencies']['proof-schemas']['version']==modules['proof-schemas']['version']
- results.append({'case':case,'model':model,'actual':actual,'modules':modules,'cpp':cpp_result,'nativeNpmGraph':native,'browserDOM':browser.stdout,'javaResourceConsumers':java_results})
+ results.append({'case':case,'model':model,'actual':actual,'modules':modules,'cpp':cpp_result,'nativeNpmGraph':native,'browserDOM':browser_dom,'javaResourceConsumers':java_results})
 assert results[0]['actual']['wire']!=results[1]['actual']['wire'];assert results[0]['modules']['proof-schemas']['version']!=results[1]['modules']['proof-schemas']['version']
 # Exercise the actual native generator against incomplete and conflicting inputs.
 from importlib.util import spec_from_file_location,module_from_spec

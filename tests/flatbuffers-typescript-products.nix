@@ -97,16 +97,16 @@ pkgs.runCommand "flatbuffers-typescript-native-consumers"
     nativeBuildInputs = [
       pkgs.python3
       pkgs.nodejs
-      pkgs.chromium
       pkgs.jdk
       pkgs.gradle
       pkgs.stdenv.cc
       pkgs.pkg-config
-    ];
+    ]
+    ++ pkgs.lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.chromium;
     buildInputs = [ pkgs.flatbuffers ];
     spec = builtins.toJSON {
       javaConsumer = "${./flatbuffers-typescript}/ResourceConsumer.java";
-      chromium = "${pkgs.chromium}/bin/chromium";
+      chromium = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.chromium}/bin/chromium" else null;
       versions = [
         (make source1 32)
         (make source2 64)
