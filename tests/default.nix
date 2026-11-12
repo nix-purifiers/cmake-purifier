@@ -142,6 +142,10 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  thrift-python-products = import ./thrift-python-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   thrift-products = import ./thrift-products.nix {
     inherit pkgs;
     build = buildCMakeProject;

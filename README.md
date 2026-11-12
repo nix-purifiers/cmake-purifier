@@ -517,3 +517,11 @@ Select `resourceRoots` and `resourceSchema = { format = "thrift"; entrypoints = 
 The native Thrift compiler generates C++ types and RPC client/processor classes from the captured include tree. Its verbose scan, parse and generation records must agree and identify captured inputs. Inputs outside that tree and duplicate program basenames are rejected. Generated code is packaged as a shared library with CMake and pkg-config metadata, tied to the selected Thrift SDK. CMake probes the generated implementation against that SDK to select and propagate a working C++ standard. Source hashes, native models, compiler input records, generated source and installed library hashes accompany the package.
 
 This projection packages the captured schema closure together. It does not acquire schema dependencies or infer separate package ownership from Thrift includes.
+
+### Thrift Python schema packages
+
+With selected Thrift `resourceRoots` and `resourceSchema`, set `thriftPythonPackage = { name = "example-schemas"; version = "1.0.0"; };`. `packages.thrift-python-bindings.projections.python` and the project's `projections.python` expose an ordinary Python wheelhouse.
+
+The native compiler supplies the schema graph, Python packages and RPC classes. Each program is generated separately so conflicting output modules are rejected before a recursive generator can overwrite them. Native scan and parse records must identify captured files; outside inputs, changed hashes and a generated package shadowing `thrift` are rejected. Namespaces follow the selected IDL.
+
+The runtime is built by the selected compiler release's own Python PEP 517 backend, including its native optional-extension policy. Native wheel metadata must match the actual compiler version. The existing Python projector gives the runtime an immutable identity and pins generated-wheel requirements to it. The adapter retains captured schema, native graph, generated source, runtime source and native extension hashes. It does not substitute a separately versioned Python runtime or infer independent schema-package ownership from includes.

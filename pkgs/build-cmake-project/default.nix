@@ -85,6 +85,7 @@
   flatbuffersPackage ? null,
   capnprotoPackage ? null,
   thriftPackage ? null,
+  thriftPythonPackage ? null,
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
   preConfigure ? "",
@@ -140,6 +141,10 @@ else
       resources = resourceViews.resources;
       inherit thriftPackage;
     };
+    thriftPython = callPackage ../../pkgs/thrift-python-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftPythonPackage;
+    };
     resourceViews = lib.optionalAttrs (resourceRoots != { }) (
       purifier.resourceProjections {
         producer = package;
@@ -161,7 +166,8 @@ else
       // resourceViews
       // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; }
       // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; }
-      // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; };
+      // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
+      // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections;
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -174,6 +180,7 @@ else
         "flatbuffersPackage"
         "capnprotoPackage"
         "thriftPackage"
+        "thriftPythonPackage"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
         # Replay listens only on loopback. Keep external outbound networking denied
@@ -263,13 +270,18 @@ else
     thriftPackage == null
     || (resourceRoots != { } && pname != "thrift-bindings")
     || throw "cmake-purifier: thriftPackage requires resourceRoots and a project name other than thrift-bindings";
+  assert
+    thriftPythonPackage == null
+    || (resourceRoots != { } && pname != "thrift-python-bindings")
+    || throw "cmake-purifier: thriftPythonPackage requires resourceRoots and a project name other than thrift-python-bindings";
   {
     packages = {
       ${pname} = package;
     }
     // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; }
     // lib.optionalAttrs (capnprotoPackage != null) { capnproto-bindings = capnproto; }
-    // lib.optionalAttrs (thriftPackage != null) { thrift-bindings = thrift; };
+    // lib.optionalAttrs (thriftPackage != null) { thrift-bindings = thrift; }
+    // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; };
     inherit projections;
 
     tests = package.overrideAttrs {
