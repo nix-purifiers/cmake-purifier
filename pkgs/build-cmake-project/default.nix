@@ -83,6 +83,10 @@
   resourceDependencies ? [ ],
   resourceSchema ? null,
   flatbuffersPackage ? null,
+  flatbuffersRustPackage ? null,
+  flatbuffersRustRuntimeLock ? null,
+  flatbuffersRustVendorBuilder ? null,
+  flatbuffersRustProjector ? null,
   flatbuffersPythonPackage ? null,
   flatbuffersJavaPackage ? null,
   flatbuffersJavaRuntimeBuilder ? null,
@@ -162,6 +166,15 @@ else
       resources = resourceViews.resources;
       inherit thriftGoPackage thriftGoProjector;
     };
+    flatbuffersRust = callPackage ../../pkgs/flatbuffers-rust-products { } {
+      resources = resourceViews.resources;
+      inherit
+        flatbuffersRustPackage
+        flatbuffersRustRuntimeLock
+        flatbuffersRustVendorBuilder
+        flatbuffersRustProjector
+        ;
+    };
     resourceViews = lib.optionalAttrs (resourceRoots != { }) (
       purifier.resourceProjections {
         producer = package;
@@ -187,7 +200,8 @@ else
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // lib.optionalAttrs (flatbuffersJavaPackage != null) flatbuffersJava.projections
-      // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections;
+      // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections
+      // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections;
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -198,6 +212,10 @@ else
         "resourceDependencies"
         "resourceSchema"
         "flatbuffersPackage"
+        "flatbuffersRustPackage"
+        "flatbuffersRustRuntimeLock"
+        "flatbuffersRustVendorBuilder"
+        "flatbuffersRustProjector"
         "flatbuffersPythonPackage"
         "flatbuffersJavaPackage"
         "flatbuffersJavaRuntimeBuilder"
@@ -311,6 +329,10 @@ else
     thriftGoPackage == null
     || (resourceRoots != { } && pname != "thrift-go-bindings")
     || throw "cmake-purifier: thriftGoPackage requires resourceRoots and a distinct project name";
+  assert
+    flatbuffersRustPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-rust-bindings")
+    || throw "cmake-purifier: flatbuffersRustPackage requires resourceRoots and a distinct project name";
   {
     packages = {
       ${pname} = package;
@@ -325,7 +347,10 @@ else
     // lib.optionalAttrs (flatbuffersJavaPackage != null) {
       flatbuffers-java-bindings = flatbuffersJava;
     }
-    // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; };
+    // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; }
+    // lib.optionalAttrs (flatbuffersRustPackage != null) {
+      flatbuffers-rust-bindings = flatbuffersRust;
+    };
     inherit projections;
 
     tests = package.overrideAttrs {

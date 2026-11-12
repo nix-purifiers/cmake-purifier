@@ -26,6 +26,10 @@ assert lib.assertMsg
     && (args.resourceDependencies or [ ]) == [ ]
     && (args.resourceSchema or null) == null
     && (args.flatbuffersPackage or null) == null
+    && (args.flatbuffersRustPackage or null) == null
+    && (args.flatbuffersRustRuntimeLock or null) == null
+    && (args.flatbuffersRustVendorBuilder or null) == null
+    && (args.flatbuffersRustProjector or null) == null
     && (args.flatbuffersPythonPackage or null) == null
     && (args.flatbuffersJavaPackage or null) == null
     && (args.flatbuffersJavaRuntimeBuilder or null) == null
@@ -73,6 +77,10 @@ let
         "resourceDependencies"
         "resourceSchema"
         "flatbuffersPackage"
+        "flatbuffersRustPackage"
+        "flatbuffersRustRuntimeLock"
+        "flatbuffersRustVendorBuilder"
+        "flatbuffersRustProjector"
         "flatbuffersPythonPackage"
         "flatbuffersJavaPackage"
         "flatbuffersJavaRuntimeBuilder"

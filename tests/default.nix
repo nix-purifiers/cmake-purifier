@@ -10,6 +10,7 @@
 {
   pkgs,
   goProjector,
+  cargoProjector,
   # The shared library's functions.
   purifier,
   # buildCMakeProject of the flake's package overlay, and
@@ -167,6 +168,11 @@ in
   flatbuffers-python-products = import ./flatbuffers-python-products.nix {
     inherit pkgs;
     build = buildCMakeProject;
+  };
+  flatbuffers-rust-products = import ./flatbuffers-rust-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = cargoProjector;
   };
   flatbuffers-products = import ./flatbuffers-products.nix {
     inherit pkgs;

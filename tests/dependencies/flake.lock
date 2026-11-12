@@ -105,6 +105,23 @@
         "type": "github"
       }
     },
+    "cargo-projector": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793983385,
+        "narHash": "sha256-nPhMqeROwYBVBGmJTDi75dg2bjnwtXMzC+2SMwDOH6I=",
+        "ref": "refs/tags/v0.1.7",
+        "rev": "2146ec401ed2f22e2068f005b76b9823b2aff1a4",
+        "revCount": 54,
+        "type": "git",
+        "url": "https://github.com/nix-purifiers/cargo-purifier"
+      },
+      "original": {
+        "ref": "refs/tags/v0.1.7",
+        "type": "git",
+        "url": "https://github.com/nix-purifiers/cargo-purifier"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
@@ -426,6 +443,7 @@
     "root": {
       "inputs": {
         "caisson": "caisson",
+        "cargo-projector": "cargo-projector",
         "flake-parts": "flake-parts_2",
         "go-projector": "go-projector",
         "nixpkgs": "nixpkgs_2",
