@@ -26,6 +26,15 @@ for index,case in enumerate(spec['versions']):
  for path in sdk.glob('*.js'):assert path.read_bytes()==(runtime.parent/path.name).read_bytes()
  results.append({'case':case,'actual':actual,'model':model,'typescriptCommand':['tsc','--strict','--target','es2020','--module','commonjs','--moduleResolution','node','--outDir','compiled','--listFiles','consumer.ts'],'typescriptOutput':'42 7 8','esmOutput':'42'})
 assert results[0]['actual']['wire']!=results[1]['actual']['wire']
+# Native syntax validation and safe bindings preserve keyword/prototype aliases.
+case=spec['aliases'];root=Path('alias-consumer').resolve();root.mkdir();env=dict(os.environ,npm_config_cache=str(root/'cache'));catalog=json.loads(Path(case['installCatalog']).read_text());entry=next(m for m in catalog['modules'] if m['name']=='@proof/thrift-aliases');subprocess.run(['npm','init','--yes','--offline'],cwd=root,env=env,check=True,capture_output=True);subprocess.run(['npm','install','--offline','--ignore-scripts','--no-audit','--no-fund',str(Path(case['install'])/entry['archive'])],cwd=root,env=env,check=True,capture_output=True)
+common="const x=require('@proof/thrift-aliases'); if(new x.default.Envelope({value:new x.class.Value({answer:42})}).value.answer!==42 || !Object.hasOwn(x,'__proto__') || new x.__proto__.Value({answer:7}).answer!==7)throw Error('alias'); console.log(42);"
+subprocess.run(['node','-e',common],cwd=root,env=env,check=True,capture_output=True)
+esm="import {default as schemas,class as values,__proto__ as a} from '@proof/thrift-aliases';if(new schemas.Envelope({value:new values.Value({answer:42})}).value.answer!==42||new a.Value({answer:7}).answer!==7)throw Error('alias');console.log(42);"
+subprocess.run(['node','--input-type=module','-e',esm],cwd=root,env=env,check=True,capture_output=True)
+(root/'alias.ts').write_text("import {default as schemas,class as values,__proto__ as a} from '@proof/thrift-aliases';const result:number=new schemas.Envelope({value:new values.Value({answer:42})}).value.answer;const other:number=new a.Value({answer:7}).answer;console.log(result,other);\n")
+subprocess.run(['tsc','--strict','--noEmit','--target','es2020','--module','commonjs','--moduleResolution','node','alias.ts'],cwd=root,check=True)
+alias_proof={'names':['default','class','__proto__'],'nativeSyntaxChecks':['node --check index.cjs','node --check index.mjs'],'commonjs':42,'esm':42,'strictTypeScriptExit':0}
 # Real compiler/type/runtime rejection controls use fresh native workspaces.
 from importlib.util import spec_from_file_location,module_from_spec
 loader=spec_from_file_location('generator',spec['generator']);generator=module_from_spec(loader);loader.loader.exec_module(generator)
@@ -63,4 +72,4 @@ strict=subprocess.run(base+['--strict'],cwd=root,text=True,capture_output=True);
 # A fresh normal npm importer cannot resolve the package without its runtime.
 root=Path('missing-runtime-consumer').resolve();root.mkdir();env=dict(os.environ,npm_config_cache=str(root/'cache'));catalog=json.loads(Path(spec['versions'][0]['catalog']).read_text());repo=Path(spec['versions'][0]['repository']);subprocess.run(['npm','init','--yes','--offline'],cwd=root,env=env,check=True,capture_output=True)
 args=['npm','install','--offline','--ignore-scripts','--no-package-lock','--no-audit','--no-fund',*[str(repo/m['archive']) for m in catalog['modules'] if m['name']!=model['runtime']['name']]];failed=subprocess.run(args,cwd=root,env=env,text=True,capture_output=True);assert failed.returncode and ('https://registry.npmjs.org/'+model['runtime']['name']) in failed.stderr,failed.stderr;print(failed.stderr,file=sys.stderr);controls['missing-runtime']={'argv':args,'exitCode':failed.returncode,'requiredRuntime':model['runtime']['name'],'requiredVersion':model['runtime']['version']}
-(out/'verification.json').write_text(json.dumps({'consumers':results,'rejectionControls':controls},indent=2)+'\n')
+(out/'verification.json').write_text(json.dumps({'consumers':results,'rejectionControls':controls,'aliasProof':alias_proof},indent=2)+'\n')

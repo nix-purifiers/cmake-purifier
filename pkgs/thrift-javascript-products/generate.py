@@ -109,9 +109,10 @@ def generate(spec,out):
     subprocess.run(['npm','pkg','delete','license','author','scripts','description','keywords'],cwd=package,check=True)
     manifest=json.loads((package/'package.json').read_text());manifest.update({'name':options['name'],'version':options['version'],'main':'index.cjs','types':'index.d.ts','files':['generated','index.cjs','index.mjs','index.d.ts'],'dependencies':{name:selected[name]['version'] for name in sorted(dependency_names)},'exports':{'.':{'types':'./index.d.ts','import':'./index.mjs','require':'./index.cjs'},**{'./'+alias:{'types':'./generated/'+module+'.d.ts','require':'./generated/'+module+'.js','import':'./generated/'+module+'.js'} for alias,module in exports.items()}}})
     (package/'package.json').write_text(json.dumps(manifest,indent=2)+'\n')
-    (package/'index.cjs').write_text(''.join('exports.'+alias+' = require('+json.dumps('./generated/'+module+'.js')+');\n' for alias,module in exports.items()))
-    (package/'index.mjs').write_text(''.join('import '+alias+' from '+json.dumps('./generated/'+module+'.js')+'; export { '+alias+' };\n' for alias,module in exports.items()))
+    (package/'index.cjs').write_text(''.join('Object.defineProperty(exports, '+json.dumps(alias)+', {enumerable:true, value:require('+json.dumps('./generated/'+module+'.js')+')});\n' for alias,module in exports.items()))
+    (package/'index.mjs').write_text(''.join('import __entry'+str(i)+' from '+json.dumps('./generated/'+module+'.js')+'; export { __entry'+str(i)+' as '+alias+' };\n' for i,(alias,module) in enumerate(exports.items())))
     (package/'index.d.ts').write_text(''.join('export * as '+alias+' from '+json.dumps('./generated/'+module+'.js')+';\n' for alias,module in exports.items()))
+    for filename in ['index.cjs','index.mjs']:subprocess.run(['node','--check',str(package/filename)],check=True)
     archives=out/'archives';archives.mkdir();packed=json.loads(subprocess.check_output(['npm','pack','--offline','--ignore-scripts','--json','--pack-destination',str(archives)],cwd=package,text=True));archive=archives/packed[0]['filename']
     generated_hashes={p.name:digest(p) for p in generated.iterdir()}
     with tarfile.open(archive) as tar:

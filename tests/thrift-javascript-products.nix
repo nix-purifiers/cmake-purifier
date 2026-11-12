@@ -57,7 +57,7 @@ let
         makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/tsc" --add-flags "$out/typescript/bin/tsc"
       '';
   make =
-    src: withTypes:
+    src: withTypes: aliases:
     let
       args = {
         inherit src;
@@ -79,15 +79,24 @@ let
             version = "1.0.0";
           };
           thriftJavaScriptPackage = {
-            name = "@proof/thrift-schemas";
+            name = if aliases then "@proof/thrift-aliases" else "@proof/thrift-schemas";
             version = "1.0.0";
-            entrypoints = {
-              schema = "main_types";
-              common = "value_types";
-              rpc = "AnswerService";
-              a = "a_types";
-              b = "b_types";
-            };
+            entrypoints = (
+              if aliases then
+                {
+                  default = "main_types";
+                  class = "value_types";
+                  __proto__ = "a_types";
+                }
+              else
+                {
+                  schema = "main_types";
+                  common = "value_types";
+                  rpc = "AnswerService";
+                  a = "a_types";
+                  b = "b_types";
+                }
+            );
           };
           thriftJavaScriptRuntimeBuilder = runtimeBuilder;
           thriftJavaScriptDependencies = pkgs.lib.optional withTypes typeSdk.release;
@@ -150,10 +159,11 @@ pkgs.runCommand "thrift-javascript-native-consumers"
     buildInputs = [ pkgs.thrift ];
     spec = builtins.toJSON {
       versions = [
-        (make source1 true)
-        (make source2 true)
+        (make source1 true false)
+        (make source2 true false)
       ];
-      noTypes = make source1 false;
+      noTypes = make source1 false false;
+      aliases = make source1 true true;
       consumer = ./thrift-javascript/consumer.cjs;
       typescriptConsumer = ./thrift-javascript/consumer.ts;
       generator = ../pkgs/thrift-javascript-products/generate.py;
