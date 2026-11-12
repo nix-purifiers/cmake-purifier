@@ -203,6 +203,11 @@ in
     build = buildCMakeProject;
     projector = goProjector;
   };
+  thrift-rust-products = import ./thrift-rust-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = cargoProjector;
+  };
   flatbuffers-rust-products = import ./flatbuffers-rust-products.nix {
     inherit pkgs;
     build = buildCMakeProject;
