@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "project": {
+    "name": "flatbuffers_schema",
+    "version": "1.0.0"
+  },
+  "definitionHash": "1414a1deb85d7de29dd798d04a647049e5598afa6b8e835fc148b113dc6fbbfa",
+  "cmakeFlags": [],
+  "artifacts": [],
+  "dependencies": [],
+  "gitCheckouts": [],
+  "hgCheckouts": [],
+  "svnCheckouts": [],
+  "cvsCheckouts": [],
+  "outputs": {
+    "files": [
+      "share/schemas/common/value.fbs",
+      "share/schemas/main.fbs"
+    ],
+    "targets": {}
+  },
+  "contentHash": "sha256:cc34570948e7d63828846e8061c1b047ff695d56922b00c7e1232aa51d02dfb4"
+}

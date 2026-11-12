@@ -142,6 +142,10 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  flatbuffers-products = import ./flatbuffers-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   resource-schema = import ./resource-schema.nix {
     inherit pkgs;
     build = buildCMakeProject;
