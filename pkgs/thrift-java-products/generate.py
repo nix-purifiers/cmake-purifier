@@ -129,5 +129,10 @@ tasks.register('retainNativeModel') { dependsOn 'jar'; doLast {
             if __import__('hashlib').sha256(jar.read(name)).hexdigest()!=expected:raise ValueError('native source archive changed generated Java')
     record={'format':'purifier-thrift-java-v1','resources':str(bundle),'sdk':str(sdk),'sdkSource':spec['sdkSource'],'compilerVersion':version,'nativeInputs':native_inputs,'nativeModels':models,'programSources':{name:names[name] for name in models},'capturedHashes':hashes,'generatedHashes':source_hashes,'commands':commands,'runtimePublicationModel':publication,'runtimeNativeRepository':spec['runtimeNativeRepository'],'runtimeRepository':spec['runtimeRepository'],'runtimeCatalog':spec['runtimeCatalog'],'runtimeNativePublication':coordinate,'runtimeModule':selected[0],'runtimeSource':spec['runtimeSource'],'nativeRuntimeJar':str(sdk_jar),'nativeRuntimeJarSha256':digest(sdk_jar),'nativeRelease':release,'nativeGradleModel':native_model,'gradleCommand':command}
     (out/'thrift-java.json').write_text(json.dumps(record,sort_keys=True,indent=2)+'\n')
+    # Publications, sources and the native model are exported; Gradle's working
+    # caches and intermediate outputs are not part of this library artifact.
+    for directory in [package/'.gradle',package/'build']:
+        if directory.exists():shutil.rmtree(directory)
+
 
 if __name__=='__main__':generate(json.loads(Path(sys.argv[1]).read_text()),Path(sys.argv[2]))
