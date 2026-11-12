@@ -56,7 +56,7 @@ let
       runHook preInstall
       mkdir -p "$out/archives" "$out/sdk"
       npm pack --ignore-scripts --json --pack-destination "$out/archives" > "$out/npm-pack.json"
-      cp -r package.json pnpm-lock.yaml tsconfig.json tsconfig.mjs.json ts js mjs node_modules "$out/sdk/"
+      cp -r package.json pnpm-lock.yaml tsconfig.json tsconfig.mjs.json ts js mjs "$out/sdk/"
       python ${./runtime.py} "$out"
       node --version > "$out/node-version.txt"
       node node_modules/typescript/bin/tsc --version > "$out/typescript-version.txt"
