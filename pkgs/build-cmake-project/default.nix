@@ -102,6 +102,9 @@
   flatbuffersGoPackage ? null,
   flatbuffersGoProjector ? null,
   flatbuffersGoRuntimeModulePath ? null,
+  thriftJavaScriptPackage ? null,
+  thriftJavaScriptRuntimeBuilder ? null,
+  thriftJavaScriptDependencies ? [ ],
   thriftGoPackage ? null,
   thriftGoProjector ? null,
   thriftPythonPackage ? null,
@@ -189,6 +192,10 @@ else
       resources = resourceViews.resources;
       inherit flatbuffersGoPackage flatbuffersGoProjector flatbuffersGoRuntimeModulePath;
     };
+    thriftJavaScript = callPackage ../thrift-javascript-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftJavaScriptPackage thriftJavaScriptRuntimeBuilder thriftJavaScriptDependencies;
+    };
     thriftGo = callPackage ../thrift-go-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftGoPackage thriftGoProjector;
@@ -256,7 +263,8 @@ else
       }
       // lib.optionalAttrs (flatbuffersGoPackage != null) flatbuffersGo.projections
       // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections
-      // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections;
+      // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections
+      // lib.optionalAttrs (thriftJavaScriptPackage != null) thriftJavaScript.projections;
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -286,6 +294,9 @@ else
         "flatbuffersGoPackage"
         "flatbuffersGoProjector"
         "flatbuffersGoRuntimeModulePath"
+        "thriftJavaScriptPackage"
+        "thriftJavaScriptRuntimeBuilder"
+        "thriftJavaScriptDependencies"
         "thriftGoPackage"
         "thriftGoProjector"
         "thriftPythonPackage"
@@ -396,8 +407,12 @@ else
     || throw "cmake-purifier: flatbuffersJavaPackage requires resourceRoots and a distinct project name";
   assert
     flatbuffersTypeScriptPackage == null
-    || (resourceRoots != { } && pname != "flatbuffers-typescript-bindings")
-    || throw "cmake-purifier: FlatBuffers TypeScript requires resourceRoots and a distinct project name";
+    || (
+      resourceRoots != { }
+      && pname != "flatbuffers-typescript-bindings"
+      && thriftJavaScriptPackage == null
+    )
+    || throw "cmake-purifier: FlatBuffers TypeScript requires resourceRoots, a distinct project name and its own npm projection";
   assert
     flatbuffersGoPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-go-bindings" && thriftGoPackage == null)
@@ -410,6 +425,10 @@ else
     flatbuffersRustPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-rust-bindings")
     || throw "cmake-purifier: flatbuffersRustPackage requires resourceRoots and a distinct project name";
+  assert
+    thriftJavaScriptPackage == null
+    || (resourceRoots != { } && pname != "thrift-javascript-bindings")
+    || throw "cmake-purifier: thriftJavaScriptPackage requires resourceRoots and a distinct project name";
   {
     packages = {
       ${pname} = package;
@@ -430,6 +449,9 @@ else
     }
     // lib.optionalAttrs (flatbuffersGoPackage != null) { flatbuffers-go-bindings = flatbuffersGo; }
     // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; }
+    // lib.optionalAttrs (thriftJavaScriptPackage != null) {
+      thrift-javascript-bindings = thriftJavaScript;
+    }
     // lib.optionalAttrs (flatbuffersRustPackage != null) {
       flatbuffers-rust-bindings = flatbuffersRust;
     };

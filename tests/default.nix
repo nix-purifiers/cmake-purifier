@@ -11,6 +11,7 @@
   pkgs,
   goProjector,
   cargoProjector,
+  npmProjector,
   gradleProjector,
   # The shared library's functions.
   purifier,
@@ -153,6 +154,11 @@ in
     inherit pkgs;
     build = buildCMakeProject;
     projector = gradleProjector;
+  };
+  thrift-javascript-products = import ./thrift-javascript-products.nix {
+    inherit pkgs purifier;
+    build = buildCMakeProject;
+    npmBuilder = npmProjector;
   };
   thrift-go-products = import ./thrift-go-products.nix {
     inherit pkgs;
