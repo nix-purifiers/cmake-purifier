@@ -92,6 +92,8 @@
   flatbuffersJavaRuntimeBuilder ? null,
   capnprotoPackage ? null,
   thriftPackage ? null,
+  thriftCGLibPackage ? null,
+  thriftCGLibRuntimeBuilder ? null,
   thriftJavaPackage ? null,
   thriftJavaRuntimeLock ? null,
   thriftJavaRuntimeWrapper ? null,
@@ -165,6 +167,10 @@ else
     thrift = callPackage ../thrift-products { } {
       resources = resourceViews.resources;
       inherit thriftPackage;
+    };
+    thriftCGLib = callPackage ../thrift-c-glib-products { } {
+      resources = resourceViews.resources;
+      inherit thriftCGLibPackage thriftCGLibRuntimeBuilder;
     };
     thriftJava = callPackage ../thrift-java-products { inherit purifier; } {
       resources = resourceViews.resources;
@@ -275,6 +281,7 @@ else
       // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; }
       // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; }
       // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
+      // lib.optionalAttrs (thriftCGLibPackage != null) { thrift-c-glib = thriftCGLib; }
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // schemaJvm
@@ -304,6 +311,8 @@ else
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "thriftCGLibPackage"
+        "thriftCGLibRuntimeBuilder"
         "thriftJavaPackage"
         "thriftJavaRuntimeLock"
         "thriftJavaRuntimeWrapper"
@@ -417,6 +426,10 @@ else
     || (resourceRoots != { } && pname != "thrift-bindings")
     || throw "cmake-purifier: thriftPackage requires resourceRoots and a project name other than thrift-bindings";
   assert
+    thriftCGLibPackage == null
+    || (resourceRoots != { } && pname != "thrift-c-glib-bindings")
+    || throw "cmake-purifier: Thrift C GLib requires captured resources and a distinct project name";
+  assert
     thriftJavaPackage == null
     || (resourceRoots != { } && pname != "thrift-java-bindings")
     || throw "cmake-purifier: thriftJavaPackage requires resourceRoots and a distinct project name";
@@ -463,6 +476,7 @@ else
     // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; }
     // lib.optionalAttrs (capnprotoPackage != null) { capnproto-bindings = capnproto; }
     // lib.optionalAttrs (thriftPackage != null) { thrift-bindings = thrift; }
+    // lib.optionalAttrs (thriftCGLibPackage != null) { thrift-c-glib-bindings = thriftCGLib; }
     // lib.optionalAttrs (thriftJavaPackage != null) { thrift-java-bindings = thriftJava; }
     // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {

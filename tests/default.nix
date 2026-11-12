@@ -169,6 +169,10 @@ in
     inherit pkgs;
     build = buildCMakeProject;
   };
+  thrift-c-glib-products = import ./thrift-c-glib-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   thrift-products = import ./thrift-products.nix {
     inherit pkgs;
     build = buildCMakeProject;

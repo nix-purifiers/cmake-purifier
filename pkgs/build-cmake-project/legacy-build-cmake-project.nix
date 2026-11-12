@@ -35,6 +35,8 @@ assert lib.assertMsg
     && (args.flatbuffersJavaRuntimeBuilder or null) == null
     && (args.capnprotoPackage or null) == null
     && (args.thriftDocumentation or null) == null
+    && (args.thriftCGLibPackage or null) == null
+    && (args.thriftCGLibRuntimeBuilder or null) == null
     && (args.thriftPackage or null) == null
     && (args.thriftJavaPackage or null) == null
     && (args.thriftJavaRuntimeLock or null) == null
@@ -102,6 +104,8 @@ let
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftDocumentation"
+        "thriftCGLibPackage"
+        "thriftCGLibRuntimeBuilder"
         "thriftPackage"
         "thriftJavaPackage"
         "thriftJavaRuntimeLock"
