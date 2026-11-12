@@ -35,6 +35,9 @@ assert lib.assertMsg
     && (args.flatbuffersJavaRuntimeBuilder or null) == null
     && (args.capnprotoPackage or null) == null
     && (args.thriftPackage or null) == null
+    && (args.flatbuffersGoPackage or null) == null
+    && (args.flatbuffersGoProjector or null) == null
+    && (args.flatbuffersGoRuntimeModulePath or null) == null
     && (args.thriftGoPackage or null) == null
     && (args.thriftGoProjector or null) == null
     && (args.thriftPythonPackage or null) == null
@@ -86,6 +89,9 @@ let
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "flatbuffersGoPackage"
+        "flatbuffersGoProjector"
+        "flatbuffersGoRuntimeModulePath"
         "thriftGoPackage"
         "thriftGoProjector"
         "thriftPythonPackage"

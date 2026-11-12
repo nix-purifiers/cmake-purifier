@@ -92,6 +92,9 @@
   flatbuffersJavaRuntimeBuilder ? null,
   capnprotoPackage ? null,
   thriftPackage ? null,
+  flatbuffersGoPackage ? null,
+  flatbuffersGoProjector ? null,
+  flatbuffersGoRuntimeModulePath ? null,
   thriftGoPackage ? null,
   thriftGoProjector ? null,
   thriftPythonPackage ? null,
@@ -162,6 +165,10 @@ else
       resources = resourceViews.resources;
       inherit flatbuffersJavaPackage flatbuffersJavaRuntimeBuilder;
     };
+    flatbuffersGo = callPackage ../../pkgs/flatbuffers-go-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit flatbuffersGoPackage flatbuffersGoProjector flatbuffersGoRuntimeModulePath;
+    };
     thriftGo = callPackage ../../pkgs/thrift-go-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftGoPackage thriftGoProjector;
@@ -200,6 +207,7 @@ else
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // lib.optionalAttrs (flatbuffersJavaPackage != null) flatbuffersJava.projections
+      // lib.optionalAttrs (flatbuffersGoPackage != null) flatbuffersGo.projections
       // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections
       // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections;
 
@@ -221,6 +229,9 @@ else
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "flatbuffersGoPackage"
+        "flatbuffersGoProjector"
+        "flatbuffersGoRuntimeModulePath"
         "thriftGoPackage"
         "thriftGoProjector"
         "thriftPythonPackage"
@@ -326,6 +337,10 @@ else
     || (resourceRoots != { } && pname != "flatbuffers-java-bindings")
     || throw "cmake-purifier: flatbuffersJavaPackage requires resourceRoots and a distinct project name";
   assert
+    flatbuffersGoPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-go-bindings" && thriftGoPackage == null)
+    || throw "cmake-purifier: flatbuffersGoPackage requires resourceRoots, a distinct name and its own Go projection";
+  assert
     thriftGoPackage == null
     || (resourceRoots != { } && pname != "thrift-go-bindings")
     || throw "cmake-purifier: thriftGoPackage requires resourceRoots and a distinct project name";
@@ -347,6 +362,7 @@ else
     // lib.optionalAttrs (flatbuffersJavaPackage != null) {
       flatbuffers-java-bindings = flatbuffersJava;
     }
+    // lib.optionalAttrs (flatbuffersGoPackage != null) { flatbuffers-go-bindings = flatbuffersGo; }
     // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; }
     // lib.optionalAttrs (flatbuffersRustPackage != null) {
       flatbuffers-rust-bindings = flatbuffersRust;

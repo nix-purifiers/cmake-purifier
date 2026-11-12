@@ -169,6 +169,11 @@ in
     inherit pkgs;
     build = buildCMakeProject;
   };
+  flatbuffers-go-products = import ./flatbuffers-go-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = goProjector;
+  };
   flatbuffers-rust-products = import ./flatbuffers-rust-products.nix {
     inherit pkgs;
     build = buildCMakeProject;
