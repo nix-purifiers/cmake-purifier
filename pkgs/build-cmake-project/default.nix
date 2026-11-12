@@ -136,7 +136,10 @@ else
       resources = resourceViews.resources;
       inherit capnprotoPackage;
     };
-    thrift = callPackage ../../pkgs/thrift-products { } { resources = resourceViews.resources; inherit thriftPackage; };
+    thrift = callPackage ../../pkgs/thrift-products { } {
+      resources = resourceViews.resources;
+      inherit thriftPackage;
+    };
     resourceViews = lib.optionalAttrs (resourceRoots != { }) (
       purifier.resourceProjections {
         producer = package;
@@ -256,7 +259,9 @@ else
     capnprotoPackage == null
     || (resourceRoots != { } && pname != "capnproto-bindings")
     || throw "cmake-purifier: capnprotoPackage requires resourceRoots and a project name other than capnproto-bindings";
-  assert thriftPackage == null || (resourceRoots != {} && pname != "thrift-bindings")
+  assert
+    thriftPackage == null
+    || (resourceRoots != { } && pname != "thrift-bindings")
     || throw "cmake-purifier: thriftPackage requires resourceRoots and a project name other than thrift-bindings";
   {
     packages = {
