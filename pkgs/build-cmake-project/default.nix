@@ -148,19 +148,19 @@ else
       else
         lock.outputs;
 
-    flatbuffers = callPackage ../../pkgs/flatbuffers-products { } {
+    flatbuffers = callPackage ../flatbuffers-products { } {
       resources = resourceViews.resources;
       inherit flatbuffersPackage;
     };
-    capnproto = callPackage ../../pkgs/capnproto-products { } {
+    capnproto = callPackage ../capnproto-products { } {
       resources = resourceViews.resources;
       inherit capnprotoPackage;
     };
-    thrift = callPackage ../../pkgs/thrift-products { } {
+    thrift = callPackage ../thrift-products { } {
       resources = resourceViews.resources;
       inherit thriftPackage;
     };
-    thriftJava = callPackage ../../pkgs/thrift-java-products { inherit purifier; } {
+    thriftJava = callPackage ../thrift-java-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit
         thriftJavaPackage
@@ -169,33 +169,31 @@ else
         thriftJavaRuntimeBuilder
         ;
     };
-    thriftPython = callPackage ../../pkgs/thrift-python-products { inherit purifier; } {
+    thriftPython = callPackage ../thrift-python-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftPythonPackage;
     };
-    flatbuffersPython = callPackage ../../pkgs/flatbuffers-python-products { inherit purifier; } {
+    flatbuffersPython = callPackage ../flatbuffers-python-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit flatbuffersPythonPackage;
     };
-    flatbuffersJava = callPackage ../../pkgs/flatbuffers-java-products { inherit purifier; } {
+    flatbuffersJava = callPackage ../flatbuffers-java-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit flatbuffersJavaPackage flatbuffersJavaRuntimeBuilder;
     };
-    flatbuffersTypeScript =
-      callPackage ../../pkgs/flatbuffers-typescript-products { inherit purifier; }
-        {
-          resources = resourceViews.resources;
-          inherit flatbuffersTypeScriptPackage flatbuffersTypeScriptVendorBuilder flatbuffersTypeScriptWebjar;
-        };
-    flatbuffersGo = callPackage ../../pkgs/flatbuffers-go-products { inherit purifier; } {
+    flatbuffersTypeScript = callPackage ../flatbuffers-typescript-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit flatbuffersTypeScriptPackage flatbuffersTypeScriptVendorBuilder flatbuffersTypeScriptWebjar;
+    };
+    flatbuffersGo = callPackage ../flatbuffers-go-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit flatbuffersGoPackage flatbuffersGoProjector flatbuffersGoRuntimeModulePath;
     };
-    thriftGo = callPackage ../../pkgs/thrift-go-products { inherit purifier; } {
+    thriftGo = callPackage ../thrift-go-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftGoPackage thriftGoProjector;
     };
-    flatbuffersRust = callPackage ../../pkgs/flatbuffers-rust-products { } {
+    flatbuffersRust = callPackage ../flatbuffers-rust-products { } {
       resources = resourceViews.resources;
       inherit
         flatbuffersRustPackage
