@@ -46,10 +46,16 @@ class Handler:
  def answer(self,delta):return 42+delta
 response=TMemoryBuffer();AnswerService.Processor(Handler()).process(TBinaryProtocol(TMemoryBuffer(request.getvalue())),TBinaryProtocol(response))
 result=AnswerService.Client(TBinaryProtocol(TMemoryBuffer(response.getvalue()))).recv_answer();assert result==43
-base=Path(sys.argv[1]);files={str(p.relative_to(base)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(base.rglob('*')) if p.is_file() and (p.suffix=='.py' or p.name.endswith(('.so','.pyd','.dylib')))}
-print(json.dumps({'answer':42,'rpc':result,'wire':wire,'acceleratedWire':accelerated,'nativeExtension':native_path,'files':files,'version':importlib.metadata.version('thrift-proof'),'runtimeVersion':importlib.metadata.version('thrift'),'requirements':importlib.metadata.requires('thrift-proof')}))
+base=Path(sys.argv[1]);origins={}
+for name in ['main_value.ttypes','common_value.ttypes','main_value.AnswerService','thrift.protocol.TBinaryProtocol','thrift.transport.TTransport']:
+ path=Path(sys.modules[name].__file__).resolve();assert path.is_relative_to(base)
+ origins[name]={'path':str(path),'relative':str(path.relative_to(base)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+files={str(p.relative_to(base)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(base.rglob('*')) if p.is_file() and (p.suffix=='.py' or p.name.endswith(('.so','.pyd','.dylib')))}
+print(json.dumps({'answer':42,'rpc':result,'wire':wire,'acceleratedWire':accelerated,'nativeExtension':native_path,'origins':origins,'files':files,'version':importlib.metadata.version('thrift-proof'),'runtimeVersion':importlib.metadata.version('thrift'),'requirements':importlib.metadata.requires('thrift-proof')}))
 '''
     actual=json.loads(subprocess.check_output([sys.executable,'-I','-c',program,str(destination),'1' if model['runtime']['nativeExtensions'] else '0'],text=True))
+    expected_files=model['generatedHashes'] | model['runtime']['runtimeSources']
+    for origin in actual['origins'].values():assert origin['sha256']==expected_files[origin['relative']]
     for name,expected in model['generatedHashes'].items():assert actual['files'][name]==expected
     for name,expected in model['runtime']['runtimeSources'].items():assert actual['files'][name]==expected
     for name,expected in model['runtime']['nativeExtensions'].items():assert actual['files'][name]==expected
