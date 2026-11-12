@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 """Consume the browser bundle over HTTP and through real JVM repositories."""
-import functools,hashlib,http.server,json,re,subprocess,threading,zipfile
+import functools,hashlib,http.server,json,re,subprocess,sys,threading,zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -37,6 +37,7 @@ if(encoded.toString('hex')!==expected||new a.Value({answer:7}).answer!==7||new b
         try:
             result=subprocess.run([spec['chromium'],'--headless','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--disable-extensions','--user-data-dir='+str(root/'browser-profile'),'--virtual-time-budget=3000','--dump-dom','http://127.0.0.1:'+str(server.server_port)+'/index.html'],capture_output=True,text=True,timeout=45)
             assert result.returncode==0 and 'id="result">43:42:7:8:'+wire in result.stdout,(result.stdout,result.stderr)
+            print(result.stdout,file=sys.stderr)  # Raw HTTP DOM remains in the native build log.
             dom=re.search(r'<p id="result">[^<]*</p>',result.stdout).group(0)
         finally:
             server.shutdown();server.server_close();thread.join();rpc_server.terminate();rpc_server.communicate(timeout=10)
