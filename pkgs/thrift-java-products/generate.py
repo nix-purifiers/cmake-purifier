@@ -127,7 +127,14 @@ tasks.register('retainNativeModel') { dependsOn 'jar'; doLast {
     with zipfile.ZipFile(source_archives[0]) as jar:
         for name,expected in source_hashes.items():
             if __import__('hashlib').sha256(jar.read(name)).hexdigest()!=expected:raise ValueError('native source archive changed generated Java')
-    record={'format':'purifier-thrift-java-v1','resources':str(bundle),'sdk':str(sdk),'sdkSource':spec['sdkSource'],'compilerVersion':version,'nativeInputs':native_inputs,'nativeModels':models,'programSources':{name:names[name] for name in models},'capturedHashes':hashes,'generatedHashes':source_hashes,'commands':commands,'runtimePublicationModel':publication,'runtimeNativeRepository':spec['runtimeNativeRepository'],'runtimeRepository':spec['runtimeRepository'],'runtimeCatalog':spec['runtimeCatalog'],'runtimeNativePublication':coordinate,'runtimeModule':selected[0],'runtimeSource':spec['runtimeSource'],'nativeRuntimeJar':str(sdk_jar),'nativeRuntimeJarSha256':digest(sdk_jar),'nativeRelease':release,'nativeGradleModel':native_model,'gradleCommand':command}
+    # Native publication indexes aggregate available versions and contain the
+    # wall clock's lastUpdated. Export the versioned component files instead.
+    component=(out/'repository'/spec['package']['groupId'].replace('.','/')/spec['package']['artifactId'])
+    indexes=[]
+    for path in sorted(component.glob('maven-metadata.xml*')):
+        if path.name=='maven-metadata.xml':print('Raw native Maven repository index:\n'+path.read_text(),file=sys.stderr)
+        indexes.append(str(path.relative_to(out/'repository')));path.unlink()
+    record={'format':'purifier-thrift-java-v1','resources':str(bundle),'sdk':str(sdk),'sdkSource':spec['sdkSource'],'compilerVersion':version,'nativeInputs':native_inputs,'nativeModels':models,'programSources':{name:names[name] for name in models},'capturedHashes':hashes,'generatedHashes':source_hashes,'commands':commands,'runtimePublicationModel':publication,'runtimeNativeRepository':spec['runtimeNativeRepository'],'runtimeRepository':spec['runtimeRepository'],'runtimeCatalog':spec['runtimeCatalog'],'runtimeNativePublication':coordinate,'runtimeModule':selected[0],'runtimeSource':spec['runtimeSource'],'nativeRuntimeJar':str(sdk_jar),'nativeRuntimeJarSha256':digest(sdk_jar),'nativeRelease':release,'nativeGradleModel':native_model,'gradleCommand':command,'omittedUnversionedRepositoryIndexes':indexes}
     (out/'thrift-java.json').write_text(json.dumps(record,sort_keys=True,indent=2)+'\n')
     # Publications, sources and the native model are exported; Gradle's working
     # caches and intermediate outputs are not part of this library artifact.
