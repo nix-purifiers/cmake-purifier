@@ -142,6 +142,10 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  capnproto-products = import ./capnproto-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   flatbuffers-products = import ./flatbuffers-products.nix {
     inherit pkgs;
     build = buildCMakeProject;

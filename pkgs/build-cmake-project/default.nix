@@ -83,6 +83,7 @@
   resourceDependencies ? [ ],
   resourceSchema ? null,
   flatbuffersPackage ? null,
+  capnprotoPackage ? null,
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
   preConfigure ? "",
@@ -130,6 +131,10 @@ else
       resources = resourceViews.resources;
       inherit flatbuffersPackage;
     };
+    capnproto = callPackage ../../pkgs/capnproto-products { } {
+      resources = resourceViews.resources;
+      inherit capnprotoPackage;
+    };
     resourceViews = lib.optionalAttrs (resourceRoots != { }) (
       purifier.resourceProjections {
         producer = package;
@@ -149,7 +154,8 @@ else
         inherit runCommand python3;
       })
       // resourceViews
-      // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; };
+      // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; }
+      // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; };
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -160,6 +166,7 @@ else
         "resourceDependencies"
         "resourceSchema"
         "flatbuffersPackage"
+        "capnprotoPackage"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
         # Replay listens only on loopback. Keep external outbound networking denied
@@ -241,11 +248,16 @@ else
     flatbuffersPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-bindings")
     || throw "cmake-purifier: flatbuffersPackage requires resourceRoots and a project name other than flatbuffers-bindings";
+  assert
+    capnprotoPackage == null
+    || (resourceRoots != { } && pname != "capnproto-bindings")
+    || throw "cmake-purifier: capnprotoPackage requires resourceRoots and a project name other than capnproto-bindings";
   {
     packages = {
       ${pname} = package;
     }
-    // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; };
+    // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; }
+    // lib.optionalAttrs (capnprotoPackage != null) { capnproto-bindings = capnproto; };
     inherit projections;
 
     tests = package.overrideAttrs {

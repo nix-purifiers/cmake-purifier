@@ -486,3 +486,26 @@ The package propagates the same FlatBuffers SDK used for generation. Its
 and schema/header hashes. Resource dependencies join the selected schema tree
 before generation. The original installed package keeps the same derivation
 with or without `flatbuffersPackage`. The legacy profile rejects this option.
+
+### Generated Cap’n Proto C++ packages
+
+Select an installed schema tree and opt into its generated C++ package:
+
+```nix
+resourceRoots."." = "share/schemas";
+resourceSchema = { format = "capnproto"; entrypoints = [ "main.capnp" ]; };
+capnprotoPackage = { name = "my_capnp"; version = "1.0.0"; };
+```
+
+Use `packages.capnproto-bindings` or `projections.capnproto-cpp` as a build
+input. CMake consumers find `my_capnp` and link `my_capnp::bindings`;
+pkg-config consumers use `my_capnp`. Both carry the selected native SDK’s
+requirements. The package contains generated headers, a shared C++ library,
+and generated sources and provenance under `share/my_capnp`.
+
+The native compiler’s `CodeGeneratorRequest` supplies the transitive file IDs,
+imports, and SDK version. Captured imported schemas become part of the package;
+SDK schemas reuse the SDK implementation, with different shadow copies
+rejected. Schema, generated-source, SDK-schema, and installed-library hashes
+are retained. The original installed package keeps its derivation identity
+with or without the opt-in. The legacy profile rejects this option.
