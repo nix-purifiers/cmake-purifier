@@ -169,6 +169,10 @@ in
     inherit pkgs;
     build = buildCMakeProject;
   };
+  flatbuffers-typescript-products = import ./flatbuffers-typescript-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   flatbuffers-go-products = import ./flatbuffers-go-products.nix {
     inherit pkgs;
     build = buildCMakeProject;

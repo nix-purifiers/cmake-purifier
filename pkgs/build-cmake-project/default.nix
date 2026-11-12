@@ -92,6 +92,9 @@
   flatbuffersJavaRuntimeBuilder ? null,
   capnprotoPackage ? null,
   thriftPackage ? null,
+  flatbuffersTypeScriptPackage ? null,
+  flatbuffersTypeScriptVendorBuilder ? null,
+  flatbuffersTypeScriptWebjar ? null,
   flatbuffersGoPackage ? null,
   flatbuffersGoProjector ? null,
   flatbuffersGoRuntimeModulePath ? null,
@@ -165,6 +168,12 @@ else
       resources = resourceViews.resources;
       inherit flatbuffersJavaPackage flatbuffersJavaRuntimeBuilder;
     };
+    flatbuffersTypeScript =
+      callPackage ../../pkgs/flatbuffers-typescript-products { inherit purifier; }
+        {
+          resources = resourceViews.resources;
+          inherit flatbuffersTypeScriptPackage flatbuffersTypeScriptVendorBuilder flatbuffersTypeScriptWebjar;
+        };
     flatbuffersGo = callPackage ../../pkgs/flatbuffers-go-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit flatbuffersGoPackage flatbuffersGoProjector flatbuffersGoRuntimeModulePath;
@@ -192,6 +201,28 @@ else
       }
     );
 
+    schemaJvm =
+      lib.optionalAttrs
+        (
+          flatbuffersJavaPackage != null
+          || (flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null)
+        )
+        (
+          purifier.jvmProjections {
+            producer = package;
+            repository = null;
+            dependencies =
+              lib.optional (flatbuffersJavaPackage != null) flatbuffersJava
+              ++ lib.optional (
+                flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null
+              ) flatbuffersTypeScript;
+            formats = [
+              "maven"
+              "ivy"
+            ];
+            inherit runCommand python3;
+          }
+        );
     projections =
       (purifier.nativeTargetProjections {
         producer = package;
@@ -206,7 +237,10 @@ else
       // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
-      // lib.optionalAttrs (flatbuffersJavaPackage != null) flatbuffersJava.projections
+      // schemaJvm
+      // lib.optionalAttrs (flatbuffersTypeScriptPackage != null) {
+        npm = flatbuffersTypeScript.projections.npm;
+      }
       // lib.optionalAttrs (flatbuffersGoPackage != null) flatbuffersGo.projections
       // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections
       // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections;
@@ -229,6 +263,9 @@ else
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "flatbuffersTypeScriptPackage"
+        "flatbuffersTypeScriptVendorBuilder"
+        "flatbuffersTypeScriptWebjar"
         "flatbuffersGoPackage"
         "flatbuffersGoProjector"
         "flatbuffersGoRuntimeModulePath"
@@ -337,6 +374,10 @@ else
     || (resourceRoots != { } && pname != "flatbuffers-java-bindings")
     || throw "cmake-purifier: flatbuffersJavaPackage requires resourceRoots and a distinct project name";
   assert
+    flatbuffersTypeScriptPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-typescript-bindings")
+    || throw "cmake-purifier: FlatBuffers TypeScript requires resourceRoots and a distinct project name";
+  assert
     flatbuffersGoPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-go-bindings" && thriftGoPackage == null)
     || throw "cmake-purifier: flatbuffersGoPackage requires resourceRoots, a distinct name and its own Go projection";
@@ -361,6 +402,9 @@ else
     }
     // lib.optionalAttrs (flatbuffersJavaPackage != null) {
       flatbuffers-java-bindings = flatbuffersJava;
+    }
+    // lib.optionalAttrs (flatbuffersTypeScriptPackage != null) {
+      flatbuffers-typescript-bindings = flatbuffersTypeScript;
     }
     // lib.optionalAttrs (flatbuffersGoPackage != null) { flatbuffers-go-bindings = flatbuffersGo; }
     // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; }

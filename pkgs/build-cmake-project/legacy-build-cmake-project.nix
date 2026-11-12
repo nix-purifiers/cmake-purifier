@@ -35,6 +35,9 @@ assert lib.assertMsg
     && (args.flatbuffersJavaRuntimeBuilder or null) == null
     && (args.capnprotoPackage or null) == null
     && (args.thriftPackage or null) == null
+    && (args.flatbuffersTypeScriptPackage or null) == null
+    && (args.flatbuffersTypeScriptVendorBuilder or null) == null
+    && (args.flatbuffersTypeScriptWebjar or null) == null
     && (args.flatbuffersGoPackage or null) == null
     && (args.flatbuffersGoProjector or null) == null
     && (args.flatbuffersGoRuntimeModulePath or null) == null
@@ -89,6 +92,9 @@ let
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "flatbuffersTypeScriptPackage"
+        "flatbuffersTypeScriptVendorBuilder"
+        "flatbuffersTypeScriptWebjar"
         "flatbuffersGoPackage"
         "flatbuffersGoProjector"
         "flatbuffersGoRuntimeModulePath"
