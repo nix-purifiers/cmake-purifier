@@ -137,7 +137,7 @@ The result has four attributes, each known at evaluation time:
   license and vulnerability tools.
 
 `buildCMakeProject` takes every argument of `stdenv.mkDerivation`, and
-nixpkgs' CMake setup hook runs the build. `nix/lib/build-cmake-project.nix`
+nixpkgs' CMake setup hook runs the build. `pkgs/build-cmake-project/default.nix`
 documents the arguments of its own: `src`, `lockFile`, `cmakeFlags`
 (after the locked ones), and `fetchers`. It takes the packages it builds
 with by name, so `cmake-purifier.buildCMakeProject.override` replaces

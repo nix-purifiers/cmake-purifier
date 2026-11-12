@@ -17,9 +17,18 @@
   legacySdkAdapter,
 }:
 let
+  runtimeSource = lib.fileset.toSource {
+    root = ../..;
+    fileset = lib.fileset.unions [
+      ../../lib-overlays/default
+      ../build-cmake-project
+      ./legacy-prefetch.nix
+      ./prefetch-vcs.nix
+    ];
+  };
   config = writeText "cmake-legacy-context.json" (
     builtins.toJSON {
-      sdk = import ../../nix/lib/legacy-sdk.nix {
+      sdk = import ../build-cmake-project/legacy-sdk.nix {
         inherit
           lib
           stdenv
@@ -36,7 +45,7 @@ let
       openssl = "${openssl}/bin/openssl";
       nixpkgs = toString pkgs.path;
       purifier = toString purifier;
-      prefetchExpression = "${../../nix/lib}/legacy-prefetch.nix";
+      prefetchExpression = "${runtimeSource}/pkgs/cmake-purifier/legacy-prefetch.nix";
     }
   );
 in

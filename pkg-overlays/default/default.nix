@@ -3,7 +3,7 @@
 # The default package overlay. It adds one attribute to the package set,
 # the scope `pkgs.cmake-purifier`, made with lib.makeScope. The scope holds
 # the command `cmake-purifier` (pkgs/cmake-purifier) and the builder
-# `buildCMakeProject` (nix/lib/build-cmake-project.nix), each a
+# `buildCMakeProject` (pkgs/build-cmake-project/default.nix), each a
 # callPackage package of the scope, so a package written for callPackage
 # takes the scope by name:
 #
@@ -28,7 +28,7 @@
       cmake-purifier = self.callPackage ../../pkgs/cmake-purifier {
         purifier = closure-inputs.purifier;
       };
-      buildCMakeProject = self.callPackage ../../nix/lib/build-cmake-project.nix {
+      buildCMakeProject = self.callPackage ../../pkgs/build-cmake-project/default.nix {
         inherit (closure-lib) purifier;
       };
     });

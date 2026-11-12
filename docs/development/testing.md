@@ -62,7 +62,7 @@ the sandbox are CI jobs of the same name.
    - `treefmt` checks the formatting of the Nix files.
 
    The evaluation checks run `nix-instantiate` on a dummy store inside the
-   sandbox, on copies of `nix/lib` and the lockfile, so that they can
+   sandbox, on copies of `lib-overlays/default` and the lockfile, so that they can
    match the error message.
 2. **conformance-offline** (`tests/offline.sh`) prefetches every fixture
    with the network, then runs its development loop of plain `cmake`,

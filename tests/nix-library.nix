@@ -86,10 +86,10 @@ let
         body // { contentHash = "sha256:" + builtins.hashString "sha256" (builtins.toJSON body); }
       )
     );
-  lockFile = writeLock (lockOf (import ../nix/lib/lock-version.nix));
+  lockFile = writeLock (lockOf (import ../lib-overlays/default/lock-version.nix));
   otherVersion = writeLock (lockOf 0);
   # A lockfile that is valid JSON, but not a cmake-purifier lockfile.
-  malformed = writeLock { version = import ../nix/lib/lock-version.nix; };
+  malformed = writeLock { version = import ../lib-overlays/default/lock-version.nix; };
 
   archive = pkgs.runCommand "archive-1.0.tar.gz" { } ''
     mkdir -p tree/archive-1.0/sub
@@ -117,16 +117,16 @@ let
       echo ${rev} > $out/REV
     '';
 
-  sources = pkgs.callPackage ../nix/lib/sources.nix {
+  sources = pkgs.callPackage ../pkgs/build-cmake-project/sources.nix {
     inherit lockFile purifier;
     fetchers = { inherit fetchurl fetchgit; };
   };
 in
 assert
-  (import ../nix/lib/lock.nix { lockFile = otherVersion; }).problems != [ ]
+  (import ../lib-overlays/default/lock.nix { lockFile = otherVersion; }).problems != [ ]
   || throw "lock.nix read a lockfile of another format version";
 assert
-  (import ../nix/lib/lock.nix { lockFile = malformed; }).problems != [ ]
+  (import ../lib-overlays/default/lock.nix { lockFile = malformed; }).problems != [ ]
   || throw "lock.nix read a lockfile without its required keys";
 assert
   builtins.attrNames sources.byName == [
@@ -136,8 +136,8 @@ assert
   ];
 pkgs.runCommand "nix-library" { } ''
   tree=${sources.tree}
-  bash ${../nix/lib/write-cache.sh} $tree $TMPDIR/copies $TMPDIR/cp/cache.cmake /provider.cmake \
-    ${../nix/lib} ${pkgs.git}/bin/git "" "" ""
+  bash ${../pkgs/build-cmake-project/write-cache.sh} $tree $TMPDIR/copies $TMPDIR/cp/cache.cmake /provider.cmake \
+    ${../pkgs/build-cmake-project} ${pkgs.git}/bin/git "" "" ""
   cat $TMPDIR/cp/cache.cmake
 
   # The archive's single top-level directory became the source tree, and
@@ -180,8 +180,8 @@ pkgs.runCommand "nix-library" { } ''
 
   # A second run with the same sources keeps the copies.
   touch $TMPDIR/copies/archive/marker
-  bash ${../nix/lib/write-cache.sh} $tree $TMPDIR/copies $TMPDIR/cp/cache.cmake /provider.cmake \
-    ${../nix/lib} ${pkgs.git}/bin/git "" "" ""
+  bash ${../pkgs/build-cmake-project/write-cache.sh} $tree $TMPDIR/copies $TMPDIR/cp/cache.cmake /provider.cmake \
+    ${../pkgs/build-cmake-project} ${pkgs.git}/bin/git "" "" ""
   [ -e $TMPDIR/copies/archive/marker ]
 
   touch $out

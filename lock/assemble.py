@@ -5,10 +5,10 @@
 #   python3 -I assemble.py <work dir> <lock version> <lockfile> <nixpkgs>
 #     <nix lib dir> <purifier> <git> <hg> <svn> <nix-prefetch-git> <definition hash>
 #
-# <nix lib dir> is this project's nix/lib, which holds prefetch-vcs.nix,
+# <nix lib dir> is the builder's runtime source tree, with its sibling CLI prefetch expression,
 # and <purifier> the source of the shared library it fetches with.
 # <definition hash> is the hash of the build definition, which
-# nix/lib/definition-hash.sh computes.
+# pkgs/build-cmake-project/definition-hash.sh computes.
 #
 # <work dir> is the lock run's scratch directory, which holds:
 #
@@ -24,7 +24,7 @@
 # records.py reads the records. This script adds what needs the checkouts
 # or the network: every git checkout is hashed with nix-prefetch-git, and
 # every Mercurial, Subversion and CVS checkout by building the fetcher of
-# the sandbox build (nix/lib/prefetch-vcs.nix).
+# the sandbox build (pkgs/cmake-purifier/prefetch-vcs.nix).
 #
 # The outputs come from the install into prefix/: `files` is every file
 # the install wrote (install_manifest.txt in build/), relative to prefix/.
@@ -62,7 +62,7 @@ from urls import https_of, url_path
 ) = sys.argv[1:]
 with open(pins_file) as f:
     pins = json.load(f)
-prefetch_vcs = os.path.join(nixlib, "prefetch-vcs.nix")
+prefetch_vcs = os.path.join(nixlib, "../cmake-purifier/prefetch-vcs.nix")
 build_dir = os.path.join(work, "build")
 prefix = os.path.join(work, "prefix")
 
@@ -290,7 +290,7 @@ def by_repo_ref(table):
 def content_hash(document):
     """The hash of a lockfile without its contentHash: the SHA-256 of its
     JSON with sorted keys and no spaces, as Nix's builtins.toJSON writes
-    it, so that nix/lib/lock.nix can check it."""
+    it, so that lib-overlays/default/lock.nix can check it."""
     canonical = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
 

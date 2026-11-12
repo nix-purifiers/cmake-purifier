@@ -101,13 +101,13 @@ runs the lock.
   (`CMakePurifierLocked.cmake`).
 - `lock/`: the lock run's recorder addon for mitmproxy (`record.py`) and
   the script that writes the lockfile from the records (`assemble.py`).
-- `nix/lib/`: the Nix library. `lock.nix` reads the lockfile, checks its
+- `lib-overlays/default/`: the public lock-reader closure. `lock.nix` reads the lockfile, checks its
   content hash and, with `definition-hash.nix`, its age, and documents
-  its format, `sources.nix`
+  its format. `pkgs/build-cmake-project/` owns `sources.nix`, which
   makes the tree a build from the lockfile reads, `write-cache.sh` writes
   its initial cache, `git-shim.sh` and `vcs-shim.sh` serve its
   checkouts, `prefetch-vcs.nix` fetches a Mercurial, Subversion or CVS checkout for
-  the hash the lock run records, and `build-cmake-project.nix` is
+  the hash the lock run records, and `pkgs/build-cmake-project/default.nix` is
   `buildCMakeProject`, which `pkg-overlays/default` adds to the scope
   `pkgs.cmake-purifier`. `lib-overlays/default` publishes `lock.nix` as
   `lib.cmake-purifier.readLock`. Every fetch goes through the shared library
@@ -119,7 +119,7 @@ runs the lock.
 
 ## Lockfile
 
-`nix/lib/lock.nix` documents the format. Its download entries are those
+`lib-overlays/default/lock.nix` documents the format. Its download entries are those
 of the shared nix-purifiers library: a file is
 `{ path, url, mirrors, hash }`, and a git checkout is
 `{ path, git = { url, rev, submodules }, hash }`. A file's path is the
