@@ -509,3 +509,11 @@ SDK schemas reuse the SDK implementation, with different shadow copies
 rejected. Schema, generated-source, SDK-schema, and installed-library hashes
 are retained. The original installed package keeps its derivation identity
 with or without the opt-in. The legacy profile rejects this option.
+
+### Thrift C++ schema packages
+
+Select `resourceRoots` and `resourceSchema = { format = "thrift"; entrypoints = [ "main.thrift" ]; };`, then set `thriftPackage = { name = "schema_package"; version = "1.0.0"; };` to expose `packages.thrift-bindings` and `projections.thrift-cpp`.
+
+The native Thrift compiler generates C++ types and RPC client/processor classes from the captured include tree. Its verbose scan, parse and generation records must agree and identify captured inputs. Inputs outside that tree and duplicate program basenames are rejected. Generated code is packaged as a shared library with CMake and pkg-config metadata, tied to the selected Thrift SDK. CMake probes the generated implementation against that SDK to select and propagate a working C++ standard. Source hashes, native models, compiler input records, generated source and installed library hashes accompany the package.
+
+This projection packages the captured schema closure together. It does not acquire schema dependencies or infer separate package ownership from Thrift includes.

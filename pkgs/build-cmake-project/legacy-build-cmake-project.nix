@@ -27,6 +27,7 @@ assert lib.assertMsg
     && (args.resourceSchema or null) == null
     && (args.flatbuffersPackage or null) == null
     && (args.capnprotoPackage or null) == null
+    && (args.thriftPackage or null) == null
   )
   "cmake-purifier: legacy profile accepts locked configure definitions and installed-file outputs only";
 let
@@ -67,6 +68,7 @@ let
         "resourceSchema"
         "flatbuffersPackage"
         "capnprotoPackage"
+        "thriftPackage"
         "cmakeFlags"
       ]
       // {

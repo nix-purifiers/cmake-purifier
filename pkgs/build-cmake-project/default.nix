@@ -84,6 +84,7 @@
   resourceSchema ? null,
   flatbuffersPackage ? null,
   capnprotoPackage ? null,
+  thriftPackage ? null,
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
   preConfigure ? "",
@@ -135,6 +136,7 @@ else
       resources = resourceViews.resources;
       inherit capnprotoPackage;
     };
+    thrift = callPackage ../../pkgs/thrift-products { } { resources = resourceViews.resources; inherit thriftPackage; };
     resourceViews = lib.optionalAttrs (resourceRoots != { }) (
       purifier.resourceProjections {
         producer = package;
@@ -155,7 +157,8 @@ else
       })
       // resourceViews
       // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; }
-      // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; };
+      // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; }
+      // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; };
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -167,6 +170,7 @@ else
         "resourceSchema"
         "flatbuffersPackage"
         "capnprotoPackage"
+        "thriftPackage"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
         # Replay listens only on loopback. Keep external outbound networking denied
@@ -252,12 +256,15 @@ else
     capnprotoPackage == null
     || (resourceRoots != { } && pname != "capnproto-bindings")
     || throw "cmake-purifier: capnprotoPackage requires resourceRoots and a project name other than capnproto-bindings";
+  assert thriftPackage == null || (resourceRoots != {} && pname != "thrift-bindings")
+    || throw "cmake-purifier: thriftPackage requires resourceRoots and a project name other than thrift-bindings";
   {
     packages = {
       ${pname} = package;
     }
     // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; }
-    // lib.optionalAttrs (capnprotoPackage != null) { capnproto-bindings = capnproto; };
+    // lib.optionalAttrs (capnprotoPackage != null) { capnproto-bindings = capnproto; }
+    // lib.optionalAttrs (thriftPackage != null) { thrift-bindings = thrift; };
     inherit projections;
 
     tests = package.overrideAttrs {
