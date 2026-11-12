@@ -88,6 +88,8 @@
   flatbuffersJavaRuntimeBuilder ? null,
   capnprotoPackage ? null,
   thriftPackage ? null,
+  thriftGoPackage ? null,
+  thriftGoProjector ? null,
   thriftPythonPackage ? null,
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
@@ -156,6 +158,10 @@ else
       resources = resourceViews.resources;
       inherit flatbuffersJavaPackage flatbuffersJavaRuntimeBuilder;
     };
+    thriftGo = callPackage ../../pkgs/thrift-go-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftGoPackage thriftGoProjector;
+    };
     resourceViews = lib.optionalAttrs (resourceRoots != { }) (
       purifier.resourceProjections {
         producer = package;
@@ -180,7 +186,8 @@ else
       // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
-      // lib.optionalAttrs (flatbuffersJavaPackage != null) flatbuffersJava.projections;
+      // lib.optionalAttrs (flatbuffersJavaPackage != null) flatbuffersJava.projections
+      // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections;
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -196,6 +203,8 @@ else
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "thriftGoPackage"
+        "thriftGoProjector"
         "thriftPythonPackage"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
@@ -298,6 +307,10 @@ else
     flatbuffersJavaPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-java-bindings")
     || throw "cmake-purifier: flatbuffersJavaPackage requires resourceRoots and a distinct project name";
+  assert
+    thriftGoPackage == null
+    || (resourceRoots != { } && pname != "thrift-go-bindings")
+    || throw "cmake-purifier: thriftGoPackage requires resourceRoots and a distinct project name";
   {
     packages = {
       ${pname} = package;
@@ -311,7 +324,8 @@ else
     }
     // lib.optionalAttrs (flatbuffersJavaPackage != null) {
       flatbuffers-java-bindings = flatbuffersJava;
-    };
+    }
+    // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; };
     inherit projections;
 
     tests = package.overrideAttrs {

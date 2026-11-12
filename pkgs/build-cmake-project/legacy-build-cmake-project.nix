@@ -31,6 +31,8 @@ assert lib.assertMsg
     && (args.flatbuffersJavaRuntimeBuilder or null) == null
     && (args.capnprotoPackage or null) == null
     && (args.thriftPackage or null) == null
+    && (args.thriftGoPackage or null) == null
+    && (args.thriftGoProjector or null) == null
     && (args.thriftPythonPackage or null) == null
   )
   "cmake-purifier: legacy profile accepts locked configure definitions and installed-file outputs only";
@@ -76,6 +78,8 @@ let
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "thriftGoPackage"
+        "thriftGoProjector"
         "thriftPythonPackage"
         "cmakeFlags"
       ]

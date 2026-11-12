@@ -9,6 +9,7 @@
 # workflow (.github/workflows/check.yml) instead.
 {
   pkgs,
+  goProjector,
   # The shared library's functions.
   purifier,
   # buildCMakeProject of the flake's package overlay, and
@@ -145,6 +146,11 @@ in
   thrift-python-products = import ./thrift-python-products.nix {
     inherit pkgs;
     build = buildCMakeProject;
+  };
+  thrift-go-products = import ./thrift-go-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = goProjector;
   };
   thrift-products = import ./thrift-products.nix {
     inherit pkgs;

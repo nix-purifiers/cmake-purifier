@@ -84,6 +84,7 @@
           {
             checks = import ../../../tests {
               inherit pkgs;
+              goProjector = inputs.go-projector.packages.${system}.default;
               inherit (self.lib) purifier;
               inherit ((pkgs.extend self.overlays.default).cmake-purifier) buildCMakeProject;
               inherit (self.lib.cmake-purifier) readLock;
