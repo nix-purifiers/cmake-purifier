@@ -99,6 +99,15 @@ let
             );
           };
           thriftJavaScriptRuntimeBuilder = runtimeBuilder;
+          thriftJavaScriptBrowserBuilder = if withTypes && !aliases then runtimeBuilder else null;
+          thriftJavaScriptWebjar =
+            if withTypes && !aliases then
+              {
+                artifactId = "thrift-schemas";
+                version = "1.0.0";
+              }
+            else
+              null;
           thriftJavaScriptDependencies = pkgs.lib.optional withTypes typeSdk.release;
         }
       );
@@ -116,6 +125,11 @@ let
       install = toString install;
       installCatalog = install.catalog;
       cpp = toString built.packages.thrift-bindings;
+      web = if withTypes && !aliases then package.projections.web.documentRoot else null;
+      javaResources =
+        if withTypes && !aliases then package.projections.java-resources.classPath else null;
+      maven = if withTypes && !aliases then toString built.projections.maven else null;
+      ivy = if withTypes && !aliases then toString built.projections.ivy else null;
     };
   missingResources =
     !(builtins.tryEval
@@ -154,6 +168,8 @@ pkgs.runCommand "thrift-javascript-native-consumers"
       pkgs.nodejs
       pkgs.stdenv.cc
       pkgs.pkg-config
+      pkgs.jdk
+      pkgs.gradle
       compiler
     ];
     buildInputs = [ pkgs.thrift ];
@@ -168,6 +184,8 @@ pkgs.runCommand "thrift-javascript-native-consumers"
       typescriptConsumer = ./thrift-javascript/consumer.ts;
       generator = ../pkgs/thrift-javascript-products/generate.py;
       cppConsumer = ./thrift/consumer.cpp;
+      javaConsumer = ./flatbuffers-typescript/ResourceConsumer.java;
+      chromium = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.chromium}/bin/chromium" else null;
       originalTypes = ./fixtures/thrift-javascript-types;
       dlLibs = pkgs.lib.optionals (!pkgs.stdenv.hostPlatform.isDarwin) [ "-ldl" ];
     };
@@ -176,5 +194,5 @@ pkgs.runCommand "thrift-javascript-native-consumers"
   ''
     export HOME="$TMPDIR/home" npm_config_cache="$TMPDIR/npm-cache"
     mkdir -p "$HOME"
-    python ${./thrift-javascript/consume.py} "$specPath" "$out"
+    python ${./thrift-javascript/consume.py} "$specPath" "$out" ${./thrift-javascript}
   ''

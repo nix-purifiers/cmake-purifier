@@ -105,6 +105,8 @@
   thriftJavaScriptPackage ? null,
   thriftJavaScriptRuntimeBuilder ? null,
   thriftJavaScriptDependencies ? [ ],
+  thriftJavaScriptBrowserBuilder ? null,
+  thriftJavaScriptWebjar ? null,
   thriftGoPackage ? null,
   thriftGoProjector ? null,
   thriftPythonPackage ? null,
@@ -194,7 +196,13 @@ else
     };
     thriftJavaScript = callPackage ../thrift-javascript-products { inherit purifier; } {
       resources = resourceViews.resources;
-      inherit thriftJavaScriptPackage thriftJavaScriptRuntimeBuilder thriftJavaScriptDependencies;
+      inherit
+        thriftJavaScriptPackage
+        thriftJavaScriptRuntimeBuilder
+        thriftJavaScriptDependencies
+        thriftJavaScriptBrowserBuilder
+        thriftJavaScriptWebjar
+        ;
     };
     thriftGo = callPackage ../thrift-go-products { inherit purifier; } {
       resources = resourceViews.resources;
@@ -225,6 +233,7 @@ else
           flatbuffersJavaPackage != null
           || thriftJavaPackage != null
           || (flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null)
+          || (thriftJavaScriptPackage != null && thriftJavaScriptWebjar != null)
         )
         (
           purifier.jvmProjections {
@@ -235,7 +244,10 @@ else
               ++ lib.optional (thriftJavaPackage != null) thriftJava
               ++ lib.optional (
                 flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null
-              ) flatbuffersTypeScript;
+              ) flatbuffersTypeScript
+              ++ lib.optional (
+                thriftJavaScriptPackage != null && thriftJavaScriptWebjar != null
+              ) thriftJavaScript;
             formats = [
               "maven"
               "ivy"
@@ -296,6 +308,8 @@ else
         "flatbuffersGoRuntimeModulePath"
         "thriftJavaScriptPackage"
         "thriftJavaScriptRuntimeBuilder"
+        "thriftJavaScriptBrowserBuilder"
+        "thriftJavaScriptWebjar"
         "thriftJavaScriptDependencies"
         "thriftGoPackage"
         "thriftGoProjector"

@@ -4,6 +4,7 @@
   runCommand,
   python3,
   nodejs,
+  esbuild,
   nix,
   thrift,
   purifier,
@@ -13,6 +14,8 @@
   thriftJavaScriptPackage,
   thriftJavaScriptRuntimeBuilder,
   thriftJavaScriptDependencies ? [ ],
+  thriftJavaScriptBrowserBuilder ? null,
+  thriftJavaScriptWebjar ? null,
 }:
 let
   options = thriftJavaScriptPackage;
@@ -47,6 +50,24 @@ let
     dependencies = thriftJavaScriptDependencies;
     formats = [ "npm" ];
   };
+  browserSdk = thriftJavaScriptBrowserBuilder {
+    src = thrift.src;
+    projectDir = "lib/js";
+    buildScripts = [ ];
+    doCheck = false;
+  };
+  browserTooling = runCommand "thrift-native-browser-tooling" { nativeBuildInputs = [ nodejs ]; } ''
+    export HOME="$TMPDIR/home" npm_config_cache="$TMPDIR/npm-cache"
+    mkdir -p "$HOME" "$npm_config_cache/_cacache"
+    cp -rs --no-preserve=mode ${browserSdk.cache}/. "$npm_config_cache/_cacache"
+    cp -r ${browserSdk.release.src} source
+    chmod -R u+w source
+    cd source/lib/js
+    npm ci --offline --ignore-scripts --no-audit --no-fund
+    mkdir -p "$out"
+    cp -r node_modules "$out/"
+    cp package.json package-lock.json "$out/"
+  '';
   generated =
     runCommand "thrift-generated-javascript-package"
       {
@@ -69,6 +90,8 @@ let
             catalog = input.repository.catalog;
           }) selected;
           package = options;
+          browserTooling = if thriftJavaScriptBrowserBuilder == null then null else toString browserTooling;
+          browserBundler = "${esbuild}/bin/esbuild";
         };
         passAsFile = [ "spec" ];
         passthru = {
@@ -77,12 +100,12 @@ let
         };
       }
       ''
-            export HOME="$TMPDIR/home" npm_config_cache="$TMPDIR/npm-cache"
+        export HOME="$TMPDIR/home" npm_config_cache="$TMPDIR/npm-cache"
         export NPM_PURIFIER_NPM_MODULES=${nodejs}/lib/node_modules/npm/node_modules
         export NPM_PURIFIER_TARGET_NODE=${nodejs}/bin/node
         export NPM_PROJECTION_NIX=${nix}/bin/nix
-            mkdir -p "$HOME"
-            python ${./generate.py} "$specPath" "$out"
+        mkdir -p "$HOME"
+        python ${./generate.py} "$specPath" "$out"
       '';
   repository =
     (purifier.npmProjections {
@@ -92,6 +115,24 @@ let
       dependencies = [ runtime ] ++ thriftJavaScriptDependencies;
       inherit runCommand python3;
     }).npm;
+  web = lib.optionalAttrs (thriftJavaScriptBrowserBuilder != null) (
+    purifier.resourceProjections {
+      producer = generated;
+      roots."." = "package/browser";
+      inherit runCommand python3;
+    }
+  );
+  webjar = lib.optionalAttrs (thriftJavaScriptWebjar != null) (
+    purifier.webjarProjections (
+      thriftJavaScriptWebjar
+      // {
+        producer = generated;
+        assets = "${generated}/package/browser";
+        inherit runCommand python3;
+      }
+    )
+  );
+
 in
 assert
   valid
@@ -99,4 +140,12 @@ assert
 assert
   builtins.isFunction thriftJavaScriptRuntimeBuilder
   || throw "cmake-purifier: Thrift JavaScript requires a released native npm SDK builder";
-generated // { projections.npm = repository; }
+assert
+  thriftJavaScriptBrowserBuilder == null
+  || builtins.isFunction thriftJavaScriptBrowserBuilder
+  || throw "cmake-purifier: Thrift browser output requires a released native npm SDK builder";
+assert
+  thriftJavaScriptWebjar == null
+  || thriftJavaScriptBrowserBuilder != null
+  || throw "cmake-purifier: Thrift WebJar requires browser outputs";
+generated // { projections = web // webjar // { npm = repository; }; }

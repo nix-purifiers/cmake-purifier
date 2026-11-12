@@ -47,6 +47,8 @@ assert lib.assertMsg
     && (args.flatbuffersGoRuntimeModulePath or null) == null
     && (args.thriftJavaScriptPackage or null) == null
     && (args.thriftJavaScriptRuntimeBuilder or null) == null
+    && (args.thriftJavaScriptBrowserBuilder or null) == null
+    && (args.thriftJavaScriptWebjar or null) == null
     && (args.thriftJavaScriptDependencies or [ ]) == [ ]
     && (args.thriftGoPackage or null) == null
     && (args.thriftGoProjector or null) == null
@@ -111,6 +113,8 @@ let
         "flatbuffersGoRuntimeModulePath"
         "thriftJavaScriptPackage"
         "thriftJavaScriptRuntimeBuilder"
+        "thriftJavaScriptBrowserBuilder"
+        "thriftJavaScriptWebjar"
         "thriftJavaScriptDependencies"
         "thriftGoPackage"
         "thriftGoProjector"

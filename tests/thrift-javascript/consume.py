@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: MIT
 import json,os,shlex,shutil,subprocess,sys,hashlib,tarfile
 from pathlib import Path
+sys.path.insert(0,str(Path(sys.argv[3])))
+from browser import verify as verify_browser
 spec=json.loads(Path(sys.argv[1]).read_text());out=Path(sys.argv[2]);out.mkdir();results=[]
+shutil.copyfile(spec['javaConsumer'],'ResourceConsumer.java')
+subprocess.run(['javac','-d','.','ResourceConsumer.java'],check=True)
+classes=str(Path.cwd())
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 for index,case in enumerate(spec['versions']):
  root=Path('consumer-'+str(index)).resolve();root.mkdir();catalog=json.loads(Path(case['catalog']).read_text());owned=next(m for m in catalog['modules'] if m['name']=='@proof/thrift-schemas' and m['primary']);view=json.loads(Path(case['installCatalog']).read_text());archive=next(m for m in view['modules'] if m['name']==owned['name'])
@@ -24,7 +29,8 @@ for index,case in enumerate(spec['versions']):
  for path in Path(spec['originalTypes']).glob('*.d.ts'):assert path.read_bytes()==(root/'node_modules/@types/thrift'/path.name).read_bytes()
  runtime=Path(actual['runtime']);sdk=Path(model['sdkSource'])/'lib/nodejs/lib/thrift';assert runtime.read_bytes()==(sdk/'index.js').read_bytes()
  for path in sdk.glob('*.js'):assert path.read_bytes()==(runtime.parent/path.name).read_bytes()
- results.append({'case':case,'actual':actual,'model':model,'typescriptCommand':['tsc','--strict','--target','es2020','--module','commonjs','--moduleResolution','node','--outDir','compiled','--listFiles','consumer.ts'],'typescriptOutput':'42 7 8','esmOutput':'42'})
+ browser=verify_browser(spec,case,model,root,wire,env,classes)
+ results.append({'browser':browser,'case':case,'actual':actual,'model':model,'typescriptCommand':['tsc','--strict','--target','es2020','--module','commonjs','--moduleResolution','node','--outDir','compiled','--listFiles','consumer.ts'],'typescriptOutput':'42 7 8','esmOutput':'42'})
 assert results[0]['actual']['wire']!=results[1]['actual']['wire']
 # Native syntax validation and safe bindings preserve keyword/prototype aliases.
 case=spec['aliases'];root=Path('alias-consumer').resolve();root.mkdir();env=dict(os.environ,npm_config_cache=str(root/'cache'));catalog=json.loads(Path(case['installCatalog']).read_text());entry=next(m for m in catalog['modules'] if m['name']=='@proof/thrift-aliases');subprocess.run(['npm','init','--yes','--offline'],cwd=root,env=env,check=True,capture_output=True);subprocess.run(['npm','install','--offline','--ignore-scripts','--no-audit','--no-fund',str(Path(case['install'])/entry['archive'])],cwd=root,env=env,check=True,capture_output=True)
