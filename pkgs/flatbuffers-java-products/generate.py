@@ -29,8 +29,19 @@ def generate(spec,out):
     def run(command):
         result=subprocess.run(command,capture_output=True,text=True)
         index=len(commands);commands.append(command)
+        # Preserve raw chronology in the Nix log. Immutable receipts exclude
+        # only the javac elapsed-time diagnostic records observed in rebuilds.
+        sys.stdout.write(result.stdout);sys.stderr.write(result.stderr)
+        stderr=result.stderr;excluded=[]
+        if Path(command[0]).name=='javac' and '-verbose' in command:
+            lines=[]
+            for line in stderr.splitlines(keepends=True):
+                if re.fullmatch(r'\[(?:parsing completed|total) [0-9]+ms\]\n?',line):excluded.append(line)
+                else:lines.append(line)
+            stderr=''.join(lines)
         (proof/f'command-{index}.stdout').write_text(result.stdout)
-        (proof/f'command-{index}.stderr').write_text(result.stderr)
+        (proof/f'command-{index}.stderr').write_text(stderr)
+        (proof/f'command-{index}.json').write_text(json.dumps({'argv':command,'exit':result.returncode,'excludedElapsedTimeRecords':len(excluded),'rawOutput':'Nix build log'},sort_keys=True,indent=2)+'\n')
         if result.returncode:raise subprocess.CalledProcessError(result.returncode,command,result.stdout,result.stderr)
     for index, entry in enumerate(catalog['schema']['entrypoints']):
         source = (root/entry).resolve(strict=True)

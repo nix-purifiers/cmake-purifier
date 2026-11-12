@@ -1,11 +1,20 @@
 # SPDX-License-Identifier: MIT
-import hashlib,json,shlex,subprocess,sys,xml.etree.ElementTree as ET,zipfile,shutil,os
+import hashlib,json,shlex,subprocess,sys,xml.etree.ElementTree as ET,zipfile,shutil,os,re
 from pathlib import Path
 spec=json.loads(Path(sys.argv[1]).read_text());out=Path(sys.argv[2]);out.mkdir();results=[]
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def run(args,label):
  result=subprocess.run([str(a) for a in args],capture_output=True,text=True)
- (out/(label+'.stdout')).write_text(result.stdout);(out/(label+'.stderr')).write_text(result.stderr)
+ sys.stdout.write(result.stdout);sys.stderr.write(result.stderr)
+ stdout=result.stdout;excluded=0
+ if str(args[0])=='gradle':
+  lines=[]
+  for line in stdout.splitlines(keepends=True):
+   if re.fullmatch(r'BUILD SUCCESSFUL in [0-9]+s\n?',line):excluded+=1
+   else:lines.append(line)
+  stdout=''.join(lines)
+ (out/(label+'.stdout')).write_text(stdout);(out/(label+'.stderr')).write_text(result.stderr)
+ (out/(label+'.command.json')).write_text(json.dumps({'argv':[str(a) for a in args],'exit':result.returncode,'excludedElapsedTimeRecords':excluded,'rawOutput':'Nix build log'},sort_keys=True,indent=2)+'\n')
  if result.returncode:raise AssertionError((args,result.stdout,result.stderr))
  return result.stdout
 for index,case in enumerate(spec['versions']):
