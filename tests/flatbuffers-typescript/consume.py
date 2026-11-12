@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-import functools,hashlib,http.server,json,os,shlex,shutil,subprocess,sys,tarfile,tempfile,threading,zipfile
+import functools,hashlib,http.server,json,os,re,shlex,shutil,subprocess,sys,tarfile,tempfile,threading,zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 spec=json.loads(Path(sys.argv[1]).read_text());out=Path(sys.argv[2]);out.mkdir();results=[]
@@ -118,7 +118,14 @@ outside=bundle('outside-import');foreign=Path('external/value.fbs').resolve();fo
 repository=Path(spec['versions'][0]['repository']);owned=results[0]['modules']['proof-schemas'];root=Path('missing-runtime').resolve();root.mkdir();env=dict(os.environ,HOME=str(root/'home'),npm_config_cache=str(root/'empty-cache'));Path(env['HOME']).mkdir()
 subprocess.run(['npm','init','--yes','--offline'],cwd=root,env=env,check=True,capture_output=True)
 failed=subprocess.run(['npm','install','--offline','--ignore-scripts','--no-package-lock','--no-audit','--no-fund',str(repository/owned['archive'])],cwd=root,env=env,capture_output=True,text=True)
-assert failed.returncode and 'flatbuffers' in failed.stderr;controls['missing-runtime']=failed.stderr;(out/'missing-runtime.stderr').write_text(failed.stderr)
+assert failed.returncode and 'flatbuffers' in failed.stderr
+# Keep the raw native diagnostic in the Nix build log. Its observed timestamped
+# debug-log location is not an artifact or dependency fact and cannot be stable.
+print('Raw native missing-runtime npm stderr:',file=sys.stderr);print(failed.stderr,end='',file=sys.stderr)
+pattern=r"npm error A complete log of this run can be found in: /build/missing-runtime/empty-cache/_logs/\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}_\d{3}Z-debug-0\.log"
+lines=failed.stderr.splitlines(keepends=True);excluded=[line for line in lines if re.fullmatch(pattern,line.rstrip('\n'))];assert len(excluded)==1
+stable=''.join(line for line in lines if line not in excluded);controls['missing-runtime']=stable;(out/'missing-runtime.stderr').write_text(stable)
+(out/'missing-runtime-command.json').write_text(json.dumps({'argv':['npm','install','--offline','--ignore-scripts','--no-package-lock','--no-audit','--no-fund',str(repository/owned['archive'])],'exitCode':failed.returncode,'excludedTimestampedLogLocationRecords':len(excluded),'rawStderr':'retained verbatim in native Nix build log'},indent=2)+'\n')
 # The same native TypeScript invocation must fail if its runtime declarations disappear.
 root=Path('0').resolve();runtime=root/'node_modules/flatbuffers'
 for path in runtime.rglob('*.d.ts'):path.unlink()
