@@ -122,7 +122,7 @@ assert failed.returncode and 'flatbuffers' in failed.stderr
 # Keep the raw native diagnostic in the Nix build log. Its observed timestamped
 # debug-log location is not an artifact or dependency fact and cannot be stable.
 print('Raw native missing-runtime npm stderr:',file=sys.stderr);print(failed.stderr,end='',file=sys.stderr)
-pattern=r"npm error A complete log of this run can be found in: /build/missing-runtime/empty-cache/_logs/\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}_\d{3}Z-debug-0\.log"
+pattern=r"npm error A complete log of this run can be found in: "+re.escape(str(root/'empty-cache/_logs'))+r"/\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}_\d{3}Z-debug-0\.log"
 lines=failed.stderr.splitlines(keepends=True);excluded=[line for line in lines if re.fullmatch(pattern,line.rstrip('\n'))];assert len(excluded)==1
 stable=''.join(line for line in lines if line not in excluded);controls['missing-runtime']=stable;(out/'missing-runtime.stderr').write_text(stable)
 (out/'missing-runtime-command.json').write_text(json.dumps({'argv':['npm','install','--offline','--ignore-scripts','--no-package-lock','--no-audit','--no-fund',str(repository/owned['archive'])],'exitCode':failed.returncode,'excludedTimestampedLogLocationRecords':len(excluded),'rawStderr':'retained verbatim in native Nix build log'},indent=2)+'\n')
