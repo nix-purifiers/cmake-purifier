@@ -83,6 +83,7 @@
   resourceDependencies ? [ ],
   resourceSchema ? null,
   flatbuffersPackage ? null,
+  flatbuffersPythonPackage ? null,
   capnprotoPackage ? null,
   thriftPackage ? null,
   thriftPythonPackage ? null,
@@ -145,6 +146,10 @@ else
       resources = resourceViews.resources;
       inherit thriftPythonPackage;
     };
+    flatbuffersPython = callPackage ../../pkgs/flatbuffers-python-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit flatbuffersPythonPackage;
+    };
     resourceViews = lib.optionalAttrs (resourceRoots != { }) (
       purifier.resourceProjections {
         producer = package;
@@ -167,7 +172,8 @@ else
       // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; }
       // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; }
       // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
-      // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections;
+      // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
+      // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections;
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -178,6 +184,7 @@ else
         "resourceDependencies"
         "resourceSchema"
         "flatbuffersPackage"
+        "flatbuffersPythonPackage"
         "capnprotoPackage"
         "thriftPackage"
         "thriftPythonPackage"
@@ -274,6 +281,10 @@ else
     thriftPythonPackage == null
     || (resourceRoots != { } && pname != "thrift-python-bindings")
     || throw "cmake-purifier: thriftPythonPackage requires resourceRoots and a project name other than thrift-python-bindings";
+  assert
+    flatbuffersPythonPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-python-bindings" && thriftPythonPackage == null)
+    || throw "cmake-purifier: flatbuffersPythonPackage requires resourceRoots, a distinct project name, and its own Python projection";
   {
     packages = {
       ${pname} = package;
@@ -281,7 +292,10 @@ else
     // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; }
     // lib.optionalAttrs (capnprotoPackage != null) { capnproto-bindings = capnproto; }
     // lib.optionalAttrs (thriftPackage != null) { thrift-bindings = thrift; }
-    // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; };
+    // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
+    // lib.optionalAttrs (flatbuffersPythonPackage != null) {
+      flatbuffers-python-bindings = flatbuffersPython;
+    };
     inherit projections;
 
     tests = package.overrideAttrs {
