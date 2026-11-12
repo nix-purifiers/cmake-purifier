@@ -11,6 +11,7 @@
   pkgs,
   goProjector,
   cargoProjector,
+  gradleProjector,
   # The shared library's functions.
   purifier,
   # buildCMakeProject of the flake's package overlay, and
@@ -147,6 +148,11 @@ in
   thrift-python-products = import ./thrift-python-products.nix {
     inherit pkgs;
     build = buildCMakeProject;
+  };
+  thrift-java-products = import ./thrift-java-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = gradleProjector;
   };
   thrift-go-products = import ./thrift-go-products.nix {
     inherit pkgs;

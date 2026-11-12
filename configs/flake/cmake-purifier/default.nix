@@ -85,6 +85,12 @@
             checks = import ../../../tests {
               inherit pkgs;
               goProjector = inputs.go-projector.packages.${system}.default;
+              gradleProjector =
+                args:
+                (pkgs.callPackage (inputs.gradle-projector + "/nix/lib/build-gradle-project.nix") {
+                  purifier = self.lib.purifier;
+                })
+                  args;
               cargoProjector =
                 args:
                 pkgs.callPackage (inputs.cargo-projector + "/nix/lib/cargo-projections.nix") (

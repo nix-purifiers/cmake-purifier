@@ -35,6 +35,10 @@ assert lib.assertMsg
     && (args.flatbuffersJavaRuntimeBuilder or null) == null
     && (args.capnprotoPackage or null) == null
     && (args.thriftPackage or null) == null
+    && (args.thriftJavaPackage or null) == null
+    && (args.thriftJavaRuntimeLock or null) == null
+    && (args.thriftJavaRuntimeWrapper or null) == null
+    && (args.thriftJavaRuntimeBuilder or null) == null
     && (args.flatbuffersTypeScriptPackage or null) == null
     && (args.flatbuffersTypeScriptVendorBuilder or null) == null
     && (args.flatbuffersTypeScriptWebjar or null) == null
@@ -92,6 +96,10 @@ let
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "thriftJavaPackage"
+        "thriftJavaRuntimeLock"
+        "thriftJavaRuntimeWrapper"
+        "thriftJavaRuntimeBuilder"
         "flatbuffersTypeScriptPackage"
         "flatbuffersTypeScriptVendorBuilder"
         "flatbuffersTypeScriptWebjar"

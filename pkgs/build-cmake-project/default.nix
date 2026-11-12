@@ -92,6 +92,10 @@
   flatbuffersJavaRuntimeBuilder ? null,
   capnprotoPackage ? null,
   thriftPackage ? null,
+  thriftJavaPackage ? null,
+  thriftJavaRuntimeLock ? null,
+  thriftJavaRuntimeWrapper ? null,
+  thriftJavaRuntimeBuilder ? null,
   flatbuffersTypeScriptPackage ? null,
   flatbuffersTypeScriptVendorBuilder ? null,
   flatbuffersTypeScriptWebjar ? null,
@@ -156,6 +160,15 @@ else
       resources = resourceViews.resources;
       inherit thriftPackage;
     };
+    thriftJava = callPackage ../../pkgs/thrift-java-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit
+        thriftJavaPackage
+        thriftJavaRuntimeLock
+        thriftJavaRuntimeWrapper
+        thriftJavaRuntimeBuilder
+        ;
+    };
     thriftPython = callPackage ../../pkgs/thrift-python-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftPythonPackage;
@@ -205,6 +218,7 @@ else
       lib.optionalAttrs
         (
           flatbuffersJavaPackage != null
+          || thriftJavaPackage != null
           || (flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null)
         )
         (
@@ -213,6 +227,7 @@ else
             repository = null;
             dependencies =
               lib.optional (flatbuffersJavaPackage != null) flatbuffersJava
+              ++ lib.optional (thriftJavaPackage != null) thriftJava
               ++ lib.optional (
                 flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null
               ) flatbuffersTypeScript;
@@ -263,6 +278,10 @@ else
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
+        "thriftJavaPackage"
+        "thriftJavaRuntimeLock"
+        "thriftJavaRuntimeWrapper"
+        "thriftJavaRuntimeBuilder"
         "flatbuffersTypeScriptPackage"
         "flatbuffersTypeScriptVendorBuilder"
         "flatbuffersTypeScriptWebjar"
@@ -362,6 +381,10 @@ else
     || (resourceRoots != { } && pname != "thrift-bindings")
     || throw "cmake-purifier: thriftPackage requires resourceRoots and a project name other than thrift-bindings";
   assert
+    thriftJavaPackage == null
+    || (resourceRoots != { } && pname != "thrift-java-bindings")
+    || throw "cmake-purifier: thriftJavaPackage requires resourceRoots and a distinct project name";
+  assert
     thriftPythonPackage == null
     || (resourceRoots != { } && pname != "thrift-python-bindings")
     || throw "cmake-purifier: thriftPythonPackage requires resourceRoots and a project name other than thrift-python-bindings";
@@ -396,6 +419,7 @@ else
     // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; }
     // lib.optionalAttrs (capnprotoPackage != null) { capnproto-bindings = capnproto; }
     // lib.optionalAttrs (thriftPackage != null) { thrift-bindings = thrift; }
+    // lib.optionalAttrs (thriftJavaPackage != null) { thrift-java-bindings = thriftJava; }
     // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;
