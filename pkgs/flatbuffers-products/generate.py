@@ -3,6 +3,7 @@
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
+import re
 import shlex
 import subprocess
 import sys
@@ -21,6 +22,9 @@ def generate(spec, output):
     sdk = Path(spec['sdk'])
     flatc = str(sdk / 'bin/flatc')
     version = subprocess.check_output([flatc, '--version'], text=True).strip()
+    sdk_version = re.fullmatch(r'flatc version (\d+\.\d+\.\d+)', version)
+    if sdk_version is None:
+        raise ValueError('cannot read native flatc SDK version: ' + version)
     commands, dependencies, source_hashes = [], {}, {}
     for entry in catalog['schema']['entrypoints']:
         command = [flatc, '--cpp', '-M', '-I', str(root), str(root / entry)]
@@ -50,7 +54,7 @@ def generate(spec, output):
     cmake.mkdir(parents=True)
     (cmake / (name + 'Config.cmake')).write_text(
         'include_guard(GLOBAL)\ninclude(CMakeFindDependencyMacro)\n'
-        'find_dependency(flatbuffers CONFIG REQUIRED)\n'
+        f'find_dependency(flatbuffers {sdk_version[1]} EXACT CONFIG REQUIRED PATHS "{sdk}/lib/cmake/flatbuffers" NO_DEFAULT_PATH)\n'
         f'add_library({name}::bindings INTERFACE IMPORTED)\n'
         f'set_target_properties({name}::bindings PROPERTIES\n'
         f' INTERFACE_INCLUDE_DIRECTORIES "{include}"\n'
