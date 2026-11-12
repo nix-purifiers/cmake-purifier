@@ -4,14 +4,15 @@ import hashlib,json,shutil,sys,tarfile
 from pathlib import Path
 out=Path(sys.argv[1])
 # Native pnpm creates these root cache-state records with timestamps/temp paths.
-# Export its compiler/tool code and dependency links, preserving every byte;
+# Copy its compiler/tool payload and dependency links; native Nix fixups follow.
+#
 # installation bookkeeping is not used by node, tsc or esbuild afterwards.
 excluded={'.modules.yaml','.pnpm-workspace-state-v1.json'}
 for name in sorted(excluded):
  path=Path('node_modules')/name
  if path.exists():print('Raw native pnpm cache state '+name+':\n'+path.read_text(),file=sys.stderr)
 shutil.copytree('node_modules',out/'sdk/node_modules',symlinks=True,ignore=lambda directory,names:excluded if Path(directory)==Path('node_modules') else set())
-(out/'tool-payload.json').write_text(json.dumps({'excludedRootPnpmCacheState':sorted(excluded),'codeAndDependencyLinks':'copied unchanged','rawCacheState':'retained verbatim in native Nix build log'},indent=2)+'\n')
+(out/'tool-payload.json').write_text(json.dumps({'excludedRootPnpmCacheState':sorted(excluded),'exportMethod':'native tree copy; standard Nix fixups retained','rawCacheState':'retained verbatim in native Nix build log'},indent=2)+'\n')
 packed=json.loads((out/'npm-pack.json').read_text());assert len(packed)==1
 archive=out/'archives'/packed[0]['filename']
 with tarfile.open(archive) as tar:metadata=json.loads(tar.extractfile('package/package.json').read())
