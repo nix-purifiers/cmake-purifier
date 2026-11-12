@@ -27,6 +27,8 @@ assert lib.assertMsg
     && (args.resourceSchema or null) == null
     && (args.flatbuffersPackage or null) == null
     && (args.flatbuffersPythonPackage or null) == null
+    && (args.flatbuffersJavaPackage or null) == null
+    && (args.flatbuffersJavaRuntimeBuilder or null) == null
     && (args.capnprotoPackage or null) == null
     && (args.thriftPackage or null) == null
     && (args.thriftPythonPackage or null) == null
@@ -70,6 +72,8 @@ let
         "resourceSchema"
         "flatbuffersPackage"
         "flatbuffersPythonPackage"
+        "flatbuffersJavaPackage"
+        "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
         "thriftPythonPackage"

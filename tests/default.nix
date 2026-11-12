@@ -154,6 +154,10 @@ in
     inherit pkgs;
     build = buildCMakeProject;
   };
+  flatbuffers-java-products = import ./flatbuffers-java-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   flatbuffers-python-products = import ./flatbuffers-python-products.nix {
     inherit pkgs;
     build = buildCMakeProject;

@@ -84,6 +84,8 @@
   resourceSchema ? null,
   flatbuffersPackage ? null,
   flatbuffersPythonPackage ? null,
+  flatbuffersJavaPackage ? null,
+  flatbuffersJavaRuntimeBuilder ? null,
   capnprotoPackage ? null,
   thriftPackage ? null,
   thriftPythonPackage ? null,
@@ -150,6 +152,10 @@ else
       resources = resourceViews.resources;
       inherit flatbuffersPythonPackage;
     };
+    flatbuffersJava = callPackage ../../pkgs/flatbuffers-java-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit flatbuffersJavaPackage flatbuffersJavaRuntimeBuilder;
+    };
     resourceViews = lib.optionalAttrs (resourceRoots != { }) (
       purifier.resourceProjections {
         producer = package;
@@ -173,7 +179,8 @@ else
       // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; }
       // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
-      // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections;
+      // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
+      // lib.optionalAttrs (flatbuffersJavaPackage != null) flatbuffersJava.projections;
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -185,6 +192,8 @@ else
         "resourceSchema"
         "flatbuffersPackage"
         "flatbuffersPythonPackage"
+        "flatbuffersJavaPackage"
+        "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
         "thriftPackage"
         "thriftPythonPackage"
@@ -285,6 +294,10 @@ else
     flatbuffersPythonPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-python-bindings" && thriftPythonPackage == null)
     || throw "cmake-purifier: flatbuffersPythonPackage requires resourceRoots, a distinct project name, and its own Python projection";
+  assert
+    flatbuffersJavaPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-java-bindings")
+    || throw "cmake-purifier: flatbuffersJavaPackage requires resourceRoots and a distinct project name";
   {
     packages = {
       ${pname} = package;
@@ -295,6 +308,9 @@ else
     // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;
+    }
+    // lib.optionalAttrs (flatbuffersJavaPackage != null) {
+      flatbuffers-java-bindings = flatbuffersJava;
     };
     inherit projections;
 
