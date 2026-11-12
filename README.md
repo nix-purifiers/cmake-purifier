@@ -556,6 +556,12 @@ Set `thriftJavaScriptBrowserBuilder` to the released npm constructor callback to
 
 The browser product exposes `projections.web.documentRoot` for HTTP serving and `projections.java-resources.classPath` for classloader resources. Set `thriftJavaScriptWebjar = { artifactId = "example-schemas"; version = "1.0.0"; };` to publish the bundle as a WebJar in the project’s Maven and Ivy repositories. This requires the browser builder. Consumer checks serve the bundle over HTTP to Chromium, compare native C++ wire bytes, and load the same bytes through Java classloaders and offline Gradle Maven/Ivy resolution.
 
+### Thrift documentation packages
+
+Set `thriftDocumentation = { formats = [ "html" "markdown" "gv" "mmd" ]; };` alongside selected Thrift resource roots and schema entrypoints. The default formats are HTML and Markdown. `packages.thrift-documentation` retains native documentation, JSON models, compiler input records and hashes. Its `projections.web.documentRoot` and `projections.java-resources.classPath` expose the complete assets. Paths retain the format and entrypoint program name, for example `html/main/index.html`, with included modules and the native stylesheet beside it. Separate entrypoints keep their native indexes in separate directories.
+
+An optional `thriftDocumentation.webjar = { artifactId = "schema-docs"; version = "1.0.0"; };` publishes the assets through Maven and Ivy, including the project's combined JVM views. The project's `projections.thrift-documentation` names this product explicitly so documentation does not replace another product's web root. Native Graphviz and Mermaid outputs remain source diagrams; they are not pre-rendered HTML. These packages document the captured schema closure and do not acquire external schema packages.
+
 ### Thrift Go schema modules
 
 With selected Thrift schema resources, set `thriftGoPackage.modulePath = "example.org/schemas";` and supply a native Go purifier CLI as `thriftGoProjector`. `packages.thrift-go-bindings.projections.go` and the project's `projections.go` expose a native Go module proxy. The selected IDL's Go namespaces determine importable package names; no generated import statements are rewritten.

@@ -165,6 +165,10 @@ in
     build = buildCMakeProject;
     projector = goProjector;
   };
+  thrift-documentation-products = import ./thrift-documentation-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   thrift-products = import ./thrift-products.nix {
     inherit pkgs;
     build = buildCMakeProject;

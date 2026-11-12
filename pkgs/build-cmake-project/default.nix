@@ -102,6 +102,7 @@
   flatbuffersGoPackage ? null,
   flatbuffersGoProjector ? null,
   flatbuffersGoRuntimeModulePath ? null,
+  thriftDocumentation ? null,
   thriftJavaScriptPackage ? null,
   thriftJavaScriptRuntimeBuilder ? null,
   thriftJavaScriptDependencies ? [ ],
@@ -194,6 +195,10 @@ else
       resources = resourceViews.resources;
       inherit flatbuffersGoPackage flatbuffersGoProjector flatbuffersGoRuntimeModulePath;
     };
+    thriftDocs = callPackage ../thrift-documentation-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftDocumentation;
+    };
     thriftJavaScript = callPackage ../thrift-javascript-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit
@@ -230,7 +235,8 @@ else
     schemaJvm =
       lib.optionalAttrs
         (
-          flatbuffersJavaPackage != null
+          (thriftDocumentation != null && (thriftDocumentation.webjar or null) != null)
+          || flatbuffersJavaPackage != null
           || thriftJavaPackage != null
           || (flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null)
           || (thriftJavaScriptPackage != null && thriftJavaScriptWebjar != null)
@@ -245,9 +251,10 @@ else
               ++ lib.optional (
                 flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null
               ) flatbuffersTypeScript
+              ++ lib.optional (thriftJavaScriptPackage != null && thriftJavaScriptWebjar != null) thriftJavaScript
               ++ lib.optional (
-                thriftJavaScriptPackage != null && thriftJavaScriptWebjar != null
-              ) thriftJavaScript;
+                thriftDocumentation != null && (thriftDocumentation.webjar or null) != null
+              ) thriftDocs;
             formats = [
               "maven"
               "ivy"
@@ -264,6 +271,7 @@ else
         inherit runCommand python3;
       })
       // resourceViews
+      // lib.optionalAttrs (thriftDocumentation != null) { thrift-documentation = thriftDocs; }
       // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; }
       // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; }
       // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
@@ -306,6 +314,7 @@ else
         "flatbuffersGoPackage"
         "flatbuffersGoProjector"
         "flatbuffersGoRuntimeModulePath"
+        "thriftDocumentation"
         "thriftJavaScriptPackage"
         "thriftJavaScriptRuntimeBuilder"
         "thriftJavaScriptBrowserBuilder"
@@ -392,6 +401,10 @@ else
     );
   in
   assert
+    thriftDocumentation == null
+    || (resourceRoots != { } && pname != "thrift-documentation")
+    || throw "cmake-purifier: Thrift documentation requires captured resources and a distinct project name";
+  assert
     flatbuffersPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-bindings")
     || throw "cmake-purifier: flatbuffersPackage requires resourceRoots and a project name other than flatbuffers-bindings";
@@ -463,6 +476,7 @@ else
     }
     // lib.optionalAttrs (flatbuffersGoPackage != null) { flatbuffers-go-bindings = flatbuffersGo; }
     // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; }
+    // lib.optionalAttrs (thriftDocumentation != null) { thrift-documentation = thriftDocs; }
     // lib.optionalAttrs (thriftJavaScriptPackage != null) {
       thrift-javascript-bindings = thriftJavaScript;
     }
