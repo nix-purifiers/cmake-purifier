@@ -25,6 +25,7 @@ assert lib.assertMsg
     && (args.resourceRoots or { }) == { }
     && (args.resourceDependencies or [ ]) == [ ]
     && (args.resourceSchema or null) == null
+    && (args.flatbuffersPackage or null) == null
   )
   "cmake-purifier: legacy profile accepts locked configure definitions and installed-file outputs only";
 let
@@ -63,6 +64,7 @@ let
         "resourceRoots"
         "resourceDependencies"
         "resourceSchema"
+        "flatbuffersPackage"
         "cmakeFlags"
       ]
       // {

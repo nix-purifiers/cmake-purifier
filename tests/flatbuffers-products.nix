@@ -9,7 +9,7 @@ let
   make =
     src:
     let
-      built = build {
+      args = {
         inherit src;
         lockFile = ./fixtures/flatbuffers-schema/cmake-purifier.lock.json;
         pname = "flatbuffers-schema";
@@ -20,14 +20,20 @@ let
           entrypoints = [ "main.fbs" ];
         };
       };
+      raw = build args;
+      built = build (
+        args
+        // {
+          flatbuffersPackage = {
+            name = "schema_proof";
+            version = "1.0.0";
+          };
+        }
+      );
     in
-    pkgs.callPackage ../pkgs/flatbuffers-products { } {
-      resources = built.projections.resources;
-      flatbuffersPackage = {
-        name = "schema_proof";
-        version = "1.0.0";
-      };
-    };
+    assert raw.packages.flatbuffers-schema.drvPath == built.packages.flatbuffers-schema.drvPath;
+    assert built.projections.flatbuffers-cpp.drvPath == built.packages.flatbuffers-bindings.drvPath;
+    built.packages.flatbuffers-bindings;
   packages = [
     (make ./fixtures/flatbuffers-schema)
     (make source2)

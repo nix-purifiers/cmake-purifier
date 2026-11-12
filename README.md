@@ -465,3 +465,24 @@ The consumer SDK recipe and repeatable original-source fixture are in
 `tests/legacy-external`. They cover nested downloads, deterministic and
 relocated relock, source preservation, native SDK origins at three levels,
 installed consumers, cold replay, pure builds and failure controls.
+
+### Generated FlatBuffers C++ packages
+
+An installed FlatBuffers include tree can also produce a ready C++ package:
+
+```nix
+resourceRoots."." = "share/schemas";
+resourceSchema = { format = "flatbuffers"; entrypoints = [ "main.fbs" ]; };
+flatbuffersPackage = { name = "my_schemas"; version = "1.0.0"; };
+```
+
+The result exposes `packages.flatbuffers-bindings` and
+`projections.flatbuffers-cpp`. CMake consumers use
+`find_package(my_schemas 1.0 CONFIG REQUIRED)` and link `my_schemas::bindings`;
+pkg-config consumers use `my_schemas`. Native `flatc` discovers the transitive
+schema dependencies and generates headers with their include paths preserved.
+The package propagates the same FlatBuffers SDK used for generation. Its
+`flatbuffers-products.json` records compiler commands, native dependency rules,
+and schema/header hashes. Resource dependencies join the selected schema tree
+before generation. The original installed package keeps the same derivation
+with or without `flatbuffersPackage`. The legacy profile rejects this option.

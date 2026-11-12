@@ -82,6 +82,7 @@
   resourceRoots ? { },
   resourceDependencies ? [ ],
   resourceSchema ? null,
+  flatbuffersPackage ? null,
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
   preConfigure ? "",
@@ -125,6 +126,20 @@ else
       else
         lock.outputs;
 
+    flatbuffers = callPackage ../../pkgs/flatbuffers-products { } {
+      resources = resourceViews.resources;
+      inherit flatbuffersPackage;
+    };
+    resourceViews = lib.optionalAttrs (resourceRoots != { }) (
+      purifier.resourceProjections {
+        producer = package;
+        roots = resourceRoots;
+        dependencies = resourceDependencies;
+        schema = resourceSchema;
+        inherit runCommand python3;
+      }
+    );
+
     projections =
       (purifier.nativeTargetProjections {
         producer = package;
@@ -133,15 +148,8 @@ else
         system = stdenv.hostPlatform.system;
         inherit runCommand python3;
       })
-      // lib.optionalAttrs (resourceRoots != { }) (
-        purifier.resourceProjections {
-          producer = package;
-          roots = resourceRoots;
-          dependencies = resourceDependencies;
-          schema = resourceSchema;
-          inherit runCommand python3;
-        }
-      );
+      // resourceViews
+      // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; };
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -151,6 +159,7 @@ else
         "resourceRoots"
         "resourceDependencies"
         "resourceSchema"
+        "flatbuffersPackage"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
         # Replay listens only on loopback. Keep external outbound networking denied
@@ -228,8 +237,15 @@ else
       }
     );
   in
+  assert
+    flatbuffersPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-bindings")
+    || throw "cmake-purifier: flatbuffersPackage requires resourceRoots and a project name other than flatbuffers-bindings";
   {
-    packages.${pname} = package;
+    packages = {
+      ${pname} = package;
+    }
+    // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; };
     inherit projections;
 
     tests = package.overrideAttrs {

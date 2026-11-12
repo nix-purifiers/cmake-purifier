@@ -53,4 +53,15 @@ except subprocess.CalledProcessError:
     pass
 else:
     raise AssertionError('native flatc accepted missing captured include')
-(out / 'verification.json').write_text(json.dumps({'consumers':results,'missingIncludeRejected':True},indent=2)+'\n')
+corrupt = Path('corrupt')
+shutil.copytree(Path(results[0]['model']['resources']), corrupt)
+changed = corrupt / 'files/main.fbs'
+changed.chmod(0o644)
+changed.write_text(changed.read_text() + '// uncaptured change\n')
+try:
+    generator.generate({'resources':str(corrupt), 'sdk':results[0]['model']['sdk'], 'name':'schema_proof','version':'1.0.0'},Path('unexpected-corrupt'))
+except ValueError as error:
+    assert 'does not match captured resources' in str(error)
+else:
+    raise AssertionError('accepted changed schema against captured hash')
+(out / 'verification.json').write_text(json.dumps({'consumers':results,'missingIncludeRejected':True,'changedSchemaRejected':True},indent=2)+'\n')
