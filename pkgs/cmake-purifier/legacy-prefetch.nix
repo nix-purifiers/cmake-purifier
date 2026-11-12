@@ -7,7 +7,7 @@
 let
   pkgs = import nixpkgs { };
 in
-(pkgs.callPackage ./legacy-sources.nix {
+(pkgs.callPackage ../build-cmake-project/legacy-sources.nix {
   inherit lockFile;
   purifier = import purifier { inherit (pkgs) lib; };
 }).tree

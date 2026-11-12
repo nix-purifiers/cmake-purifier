@@ -19,7 +19,7 @@
 }:
 let
   memory = purifier.checkLock (
-    import ./legacy-lock.nix {
+    import ../../lib-overlays/default/legacy-lock.nix {
       inherit lockFile;
       src = projectSrc;
     }

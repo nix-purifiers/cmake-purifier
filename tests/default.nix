@@ -101,7 +101,7 @@ let
         touch $out
       '';
 
-  # Reading <lockFile> for a copy of <src> with nix/lib/lock.nix must fail
+  # Reading <lockFile> for a copy of <src> with lib-overlays/default/lock.nix must fail
   # at evaluation, with an error that matches <pattern>: the evaluation
   # fails with the lock's problems, as the shared library's checkLock
   # does. It runs inside the sandbox, on a dummy store, from copies of the
@@ -116,7 +116,7 @@ let
     }:
     pkgs.runCommand name { nativeBuildInputs = [ pkgs.nix ]; } ''
       export HOME=$TMPDIR NIX_STATE_DIR=$TMPDIR/state NIX_CONF_DIR=$TMPDIR
-      cp -r ${../nix/lib} lib
+      cp -r ${../lib-overlays/default} lib
       cp ${lockFile} lock.json
       ${lib.optionalString (src != null) ''
         cp -r ${src} project
@@ -283,9 +283,9 @@ in
     pkgs.runCommand "definition-hash" { } (
       lib.concatStrings (
         lib.mapAttrsToList (name: src: ''
-          [ "$(bash ${../nix/lib/definition-hash.sh} ${src})" = ${import ../nix/lib/definition-hash.nix src} ] ||
+          [ "$(bash ${../pkgs/build-cmake-project/definition-hash.sh} ${src})" = ${import ../lib-overlays/default/definition-hash.nix src} ] ||
             { echo "${name}: the shell and the Nix definition hash differ" >&2; exit 1; }
-          [ ${import ../nix/lib/definition-hash.nix src} = ${
+          [ ${import ../lib-overlays/default/definition-hash.nix src} = ${
             (lib.importJSON (src + "/cmake-purifier.lock.json")).definitionHash
           } ] ||
             { echo "${name} hashes differently from its lockfile" >&2; exit 1; }

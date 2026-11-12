@@ -20,7 +20,7 @@
 # GIT_EXECUTABLE that logs every git command, and the dependency provider
 # cmake/CMakePurifierLock.cmake, which names the FetchContent dependency
 # each download belongs to. lock/assemble.py turns the three records into
-# the lockfile (see nix/lib/lock.nix for the format). The configure arguments go into the lockfile too, since they
+# the lockfile (see lib-overlays/default/lock.nix for the format). The configure arguments go into the lockfile too, since they
 # decide which downloads the build makes; every build of the lockfile
 # passes them first. After the build, `lock` installs the project into a
 # scratch prefix and records what it installed, so that Nix knows the
@@ -58,6 +58,7 @@
 # The commands run the `nix-build` and `nix build` of the user's own Nix
 # installation, and `lock` runs its own nix-prefetch-git.
 {
+  lib,
   pkgs,
   nativeProfile ? "modern-v1",
   legacyProjectName ? null,
@@ -82,6 +83,17 @@
   # package overlay passes.
   purifier ? throw "cmake-purifier: the command needs the source of the shared purifier library; take it from this flake's overlay",
 }:
+let
+  runtimeSource = lib.fileset.toSource {
+    root = ../..;
+    fileset = lib.fileset.unions [
+      ../../lib-overlays/default
+      ../build-cmake-project
+      ./legacy-prefetch.nix
+      ./prefetch-vcs.nix
+    ];
+  };
+in
 if nativeProfile == "legacy-external-v1" then
   pkgs.callPackage ./legacy.nix {
     inherit
@@ -110,10 +122,10 @@ else
       mainProgram = "cmake-purifier";
     };
     text = ''
-      lockVersion=${toString (import ../../nix/lib/lock-version.nix)}
+      lockVersion=${toString (import ../../lib-overlays/default/lock-version.nix)}
       provider=${../../cmake}/CMakePurifierLock.cmake
       lockedProvider=${../../cmake}/CMakePurifierLocked.cmake
-      nixlib=${../../nix/lib}
+      nixlib=${runtimeSource}/pkgs/build-cmake-project
       purifierlib=${purifier}
       lockdir=${../../lock}
       nixpkgs=${pkgs.path}

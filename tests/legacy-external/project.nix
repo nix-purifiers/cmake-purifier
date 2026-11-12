@@ -16,7 +16,7 @@ in
   package = project.packages.legacy_native;
   inherit (project) tests release projections;
   targets = project.packages.legacy_native.targets;
-  memory = import ../../nix/lib/lock.nix {
+  memory = import ../../lib-overlays/default/lock.nix {
     inherit src;
     lockFile = src + "/cmake-purifier.lock.json";
   };

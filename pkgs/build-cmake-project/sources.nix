@@ -51,7 +51,7 @@ let
   # The lock in memory, checked by the shared library, and the lockfile's
   # own fields.
   memory = purifier.checkLock (
-    import ./lock.nix {
+    import ../../lib-overlays/default/lock.nix {
       inherit lockFile;
       src = projectSrc;
     }
