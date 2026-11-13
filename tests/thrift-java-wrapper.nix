@@ -3,12 +3,15 @@ let
   nativeGradle = pkgs.gradle_8.unwrapped;
 in
 pkgs.runCommand "thrift-java-native-gradle-wrapper"
-  {
+  ({
     nativeBuildInputs = [
       nativeGradle
       pkgs.jdk17_headless
     ];
-  }
+  } // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+    # Gradle uses a local socket for native file-lock contention handling.
+    __darwinAllowLocalNetworking = true;
+  })
   ''
     export HOME="$TMPDIR/home" GRADLE_USER_HOME="$TMPDIR/gradle-home" JAVA_HOME=${pkgs.jdk17_headless}
     mkdir -p "$HOME" project
