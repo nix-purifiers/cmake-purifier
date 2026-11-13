@@ -113,6 +113,7 @@
   thriftGoPackage ? null,
   thriftGoProjector ? null,
   thriftPythonPackage ? null,
+  thriftErlangPackage ? null,
   thriftRubyPackage ? null,
   thriftRubyDependencies ? [ ],
   cmakeFlags ? [ ],
@@ -186,6 +187,10 @@ else
     thriftPython = callPackage ../thrift-python-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftPythonPackage;
+    };
+    thriftErlang = callPackage ../thrift-erlang-products { } {
+      resources = resourceViews.resources;
+      inherit thriftErlangPackage;
     };
     thriftRuby = callPackage ../thrift-ruby-products { inherit purifier; } {
       resources = resourceViews.resources;
@@ -339,6 +344,7 @@ else
         "thriftGoPackage"
         "thriftGoProjector"
         "thriftPythonPackage"
+        "thriftErlangPackage"
         "thriftRubyPackage"
         "thriftRubyDependencies"
       ]
@@ -447,6 +453,10 @@ else
     || (resourceRoots != { } && pname != "thrift-python-bindings")
     || throw "cmake-purifier: thriftPythonPackage requires resourceRoots and a project name other than thrift-python-bindings";
   assert
+    thriftErlangPackage == null
+    || (resourceRoots != { } && pname != "thrift-erlang-bindings")
+    || throw "cmake-purifier: thriftErlangPackage requires captured resources and a distinct project name";
+  assert
     thriftRubyPackage == null
     || (resourceRoots != { } && pname != "thrift-ruby-bindings")
     || throw "cmake-purifier: thriftRubyPackage requires captured resources and a distinct project name";
@@ -493,6 +503,7 @@ else
     // lib.optionalAttrs (thriftJavaPackage != null) { thrift-java-bindings = thriftJava; }
     // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
     // lib.optionalAttrs (thriftRubyPackage != null) { thrift-ruby-bindings = thriftRuby; }
+    // lib.optionalAttrs (thriftErlangPackage != null) { thrift-erlang-bindings = thriftErlang; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;
     }
