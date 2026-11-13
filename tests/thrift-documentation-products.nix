@@ -58,7 +58,7 @@ let
     };
 in
 pkgs.runCommand "thrift-native-documentation-consumers"
-  {
+  ({
     nativeBuildInputs = [
       pkgs.python3
       pkgs.jdk
@@ -76,7 +76,9 @@ pkgs.runCommand "thrift-native-documentation-consumers"
       generator = ../pkgs/thrift-documentation-products/generate.py;
     };
     passAsFile = [ "spec" ];
-  }
+  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+    __darwinAllowLocalNetworking = true;
+  })
   ''
     export HOME="$TMPDIR/home"
     mkdir -p "$HOME"
