@@ -188,7 +188,7 @@ else
       resources = resourceViews.resources;
       inherit thriftPythonPackage;
     };
-    thriftErlang = callPackage ../thrift-erlang-products { } {
+    thriftErlang = callPackage ../thrift-erlang-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftErlangPackage;
     };
@@ -295,6 +295,7 @@ else
       // lib.optionalAttrs (thriftCGLibPackage != null) { thrift-c-glib = thriftCGLib; }
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (thriftRubyPackage != null) thriftRuby.projections
+      // lib.optionalAttrs (thriftErlangPackage != null) thriftErlang.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // schemaJvm
       // lib.optionalAttrs (flatbuffersTypeScriptPackage != null) {

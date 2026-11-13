@@ -32,6 +32,7 @@ let
       );
     in
     assert raw.packages.thrift-schema.drvPath == built.packages.thrift-schema.drvPath;
+    assert built.projections.otp == built.packages.thrift-erlang-bindings.projections.otp;
     built.packages.thrift-erlang-bindings;
   packages = [
     (make ./fixtures/thrift-cpp)
@@ -50,6 +51,13 @@ pkgs.runCommand "thrift-erlang-native-consumers"
       package = toString (builtins.head packages);
       proof = toString (builtins.head packages).proof;
       generator = ../pkgs/thrift-erlang-products/generate.py;
+      projectedCases = map (package: {
+        repository = toString package.projections.otp;
+        catalog = package.projections.otp.catalog;
+        producer = toString package;
+        runtime = toString package.sdkRuntime;
+        proof = toString package.proof;
+      }) packages;
     };
     passAsFile = [ "controls" ];
     ERL_FLAGS = "+S 2:2";
@@ -62,9 +70,9 @@ pkgs.runCommand "thrift-erlang-native-consumers"
     + pkgs.lib.concatImapStrings (i: package: ''
       mkdir case${toString i}
       cd case${toString i}
-      export ERL_LIBS="${package}/lib:${package.sdkRuntime}/lib"
-      export EXPECTED_APP_ROOT=${package}
-      export EXPECTED_RUNTIME_ROOT=${package.sdkRuntime}
+      export ERL_LIBS="${package.projections.otp.applicationRoot}"
+      export EXPECTED_APP_ROOT=${package.projections.otp.applicationRoot}
+      export EXPECTED_RUNTIME_ROOT=${package.projections.otp.applicationRoot}
       export EXPECTED_COMPILER_VERSION="$(${package.sdk}/bin/thrift --version)"
       erlc ../consume.erl
       export EXPECTED_WIRE=${if i == 1 then "0C00010800010000002A0000" else "0C00010800020000002A0000"}

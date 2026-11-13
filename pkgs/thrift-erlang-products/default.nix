@@ -5,6 +5,8 @@
   python3,
   beamPackages,
   thrift,
+  purifier,
+  stdenv,
 }:
 { resources, thriftErlangPackage }:
 let
@@ -22,7 +24,7 @@ let
     && builtins.isString options.version
     && options.version != "";
   inherit (beamPackages) erlang;
-  runtime =
+  runtimeApp =
     runCommand "thrift-native-erlang-runtime"
       {
         outputs = [
@@ -55,6 +57,20 @@ let
         python ${./runtime-proof.py} ${thrift.src} "$out" "$proof" ${thrift} ${erlang}
         cp ${thrift.src}/LICENSE ${thrift.src}/NOTICE "$out/"
       '';
+  runtime = runtimeApp // {
+    projections = purifier.otpProjections {
+      producer = runtimeApp;
+      applications = [
+        {
+          path = "lib/thrift";
+          observation = "lib/thrift/ebin/otp-observation.term";
+        }
+      ];
+      runtime = erlang;
+      system = stdenv.buildPlatform.system;
+      inherit runCommand python3;
+    };
+  };
   package =
     runCommand "thrift-generated-erlang-application"
       {
@@ -95,3 +111,18 @@ in
 assert
   valid || throw "cmake-purifier: thriftErlangPackage requires an OTP application name and version";
 package
+// {
+  projections = purifier.otpProjections {
+    producer = package;
+    applications = [
+      {
+        path = "lib/${options.name}";
+        observation = "lib/${options.name}/ebin/otp-observation.term";
+      }
+    ];
+    runtime = erlang;
+    dependencies = [ runtime ];
+    system = stdenv.buildPlatform.system;
+    inherit runCommand python3;
+  };
+}

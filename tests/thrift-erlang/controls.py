@@ -61,4 +61,26 @@ reject('outside-import', outside, 'native compiler input escapes')
 collision = bundle('collision')
 admit(collision, 'common/value.thrift', (collision / 'files/common/value.thrift').read_text() + '\nservice AnswerService { i32 other() }\n')
 reject('generated-collision', collision, 'native generated Erlang output collision')
-Path(sys.argv[2]).write_text(json.dumps({'generatedByteJoins': len(model['generatedHashes']), 'controls': controls}, indent=2) + '\n')
+projection_joins = []
+for case in spec['projectedCases']:
+    catalog = json.loads(Path(case['catalog']).read_text())
+    assert catalog['roots'] == ['schema']
+    apps = {app['name']: app for app in catalog['applications']}
+    assert set(apps) == {'schema', 'thrift'}
+    assert apps['schema']['origin'] == case['producer']
+    assert apps['thrift']['origin'] == case['runtime']
+    native = json.loads((Path(case['proof']) / 'thrift-erlang.json').read_text())
+    assert native['compilerVersion'] == 'Thrift version ' + apps['thrift']['version']
+    joined = 0
+    for app in apps.values():
+        for record in app['files']:
+            original = Path(app['originDirectory']) / record['path']
+            projected = Path(case['repository']) / app['directory'] / record['path']
+            assert original.read_bytes() == projected.read_bytes()
+            assert hashlib.sha256(projected.read_bytes()).hexdigest() == record['sha256']
+            assert (projected.stat().st_mode & 0o777) == record['mode']
+            joined += 1
+    projection_joins.append({'repository': case['repository'], 'nativeFileJoins': joined,
+        'nativeVersions': {name: app['version'] for name, app in apps.items()}})
+Path(sys.argv[2]).write_text(json.dumps({'generatedByteJoins': len(model['generatedHashes']),
+    'controls': controls, 'projectionJoins': projection_joins}, indent=2) + '\n')

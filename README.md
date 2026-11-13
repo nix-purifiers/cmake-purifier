@@ -641,6 +641,7 @@ Native Thrift Erlang applications can be selected with
 alongside captured Thrift resources. `packages.thrift-erlang-bindings` contains
 compiled OTP modules, native record headers, and an application descriptor;
 its `sdkRuntime` contains the matching selected Thrift runtime application.
-Use both `lib` directories in `ERL_LIBS`. The native Erlang compiler supplies
+The `.projections.otp.applicationRoot` view composes the native compiled
+schema and runtime applications for `ERL_LIBS`. The native Erlang compiler supplies
 module metadata, and generated source bytes remain unchanged. The selected
 `beamPackages` and `thrift` packages remain overridable through the package scope.
