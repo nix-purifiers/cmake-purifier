@@ -40,7 +40,18 @@ let
 in
 pkgs.runCommand "thrift-erlang-native-consumers"
   {
-    nativeBuildInputs = [ pkgs.beamPackages.erlang ];
+    nativeBuildInputs = [
+      pkgs.beamPackages.erlang
+      pkgs.python3
+    ];
+    controls = builtins.toJSON {
+      resources = toString (builtins.head packages).schemaResources;
+      sdk = toString (builtins.head packages).sdk;
+      package = toString (builtins.head packages);
+      proof = toString (builtins.head packages).proof;
+      generator = ../pkgs/thrift-erlang-products/generate.py;
+    };
+    passAsFile = [ "controls" ];
     ERL_FLAGS = "+S 2:2";
   }
   (
@@ -61,4 +72,5 @@ pkgs.runCommand "thrift-erlang-native-consumers"
       cp wire.bin "$out/case${toString i}.bin"
       cd ..
     '') packages
+    + ''python ${./thrift-erlang/controls.py} "$controlsPath" "$out/controls.json"''
   )

@@ -1,6 +1,11 @@
 #!/usr/bin/env escript
 %% SPDX-License-Identifier: MIT
 main([Template, Name, Version, Ebin, RuntimeEbin]) ->
+    case application:load(compiler) of
+        ok -> ok;
+        {error, {already_loaded, compiler}} -> ok
+    end,
+    {ok, CompilerVersion} = application:get_key(compiler, vsn),
     Beams = filelib:wildcard(filename:join(Ebin, "*.beam")),
     Compiled = [begin
         {ok, {Module, Chunks}} = beam_lib:chunks(File, [exports, imports, compile_info]),
@@ -20,17 +25,19 @@ main([Template, Name, Version, Ebin, RuntimeEbin]) ->
         _ ->
             {ok, [{application, NativeApp, NativeProperties}]} = file:consult(Template),
             {vsn, NativeVersion} = lists:keyfind(vsn, 1, NativeProperties),
-            {ok, CompilerVersion} = file:read_file(Version),
-            true = string:trim(binary_to_list(CompilerVersion)) =:= "Thrift version " ++ NativeVersion,
+            {ok, ThriftCompilerVersion} = file:read_file(Version),
+            true = string:trim(binary_to_list(ThriftCompilerVersion)) =:= "Thrift version " ++ NativeVersion,
             {NativeApp, NativeProperties}
     end,
     Terms = {application, App, lists:keystore(modules, 1, Properties, {modules, Modules})},
     ok = file:write_file(filename:join(Ebin, atom_to_list(App) ++ ".app"), io_lib:format("~p.~n", [Terms])),
     ok = file:write_file(filename:join(Ebin, "otp-observation.term"), io_lib:format("~p.~n", [
-        #{otp => erlang:system_info(otp_release), erts => erlang:system_info(version),
+        #{format => "purifier-otp-production-v1",
+          otp => erlang:system_info(otp_release), erts => erlang:system_info(version),
           architecture => erlang:system_info(system_architecture),
           nifVersion => erlang:system_info(nif_version),
           runtime => os:getenv("PURIFIER_ERLANG_RUNTIME"), runtimeRoot => code:root_dir(),
-          compiler => code:which(compile), erlc => os:find_executable("erlc"),
+          compiler => code:which(compile), compilerPath => code:which(compile),
+          compilerVersion => CompilerVersion, erlc => os:find_executable("erlc"),
           modules => Modules, compiled => Compiled}
     ])).
