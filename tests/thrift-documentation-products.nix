@@ -58,27 +58,30 @@ let
     };
 in
 pkgs.runCommand "thrift-native-documentation-consumers"
-  ({
-    nativeBuildInputs = [
-      pkgs.python3
-      pkgs.jdk
-      pkgs.gradle
-      pkgs.graphviz
-      pkgs.thrift
-    ];
-    spec = builtins.toJSON {
-      versions = [
-        (make source)
-        (make source2)
+  (
+    {
+      nativeBuildInputs = [
+        pkgs.python3
+        pkgs.jdk
+        pkgs.gradle
+        pkgs.graphviz
+        pkgs.thrift
       ];
-      chromium = if pkgs.stdenv.isLinux then "${pkgs.chromium}/bin/chromium" else null;
-      javaConsumer = ./flatbuffers-typescript/ResourceConsumer.java;
-      generator = ../pkgs/thrift-documentation-products/generate.py;
-    };
-    passAsFile = [ "spec" ];
-  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
-    __darwinAllowLocalNetworking = true;
-  })
+      spec = builtins.toJSON {
+        versions = [
+          (make source)
+          (make source2)
+        ];
+        chromium = if pkgs.stdenv.isLinux then "${pkgs.chromium}/bin/chromium" else null;
+        javaConsumer = ./flatbuffers-typescript/ResourceConsumer.java;
+        generator = ../pkgs/thrift-documentation-products/generate.py;
+      };
+      passAsFile = [ "spec" ];
+    }
+    // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+      __darwinAllowLocalNetworking = true;
+    }
+  )
   ''
     export HOME="$TMPDIR/home"
     mkdir -p "$HOME"
