@@ -27,6 +27,16 @@ let
   };
   basicPackage = basic.packages.purifier-basic;
 
+  bundlePrefix = buildCMakeProject {
+    src = ./fixtures/bundle-prefix;
+    # This producer defines absolute build-local destinations. Capture
+    # normalizes their metadata; the producer still owns Nix relocation.
+    postInstall = ''
+      mkdir -p "$out"
+      cp -a bundle/. "$out/"
+    '';
+  };
+
   # Downloads outside FetchContent_MakeAvailable(): file(DOWNLOAD) at
   # configure and build time, CPM.cmake, and ExternalProject_Add() with a
   # URL and with git.
@@ -153,6 +163,18 @@ in
   # records as a download FetchContent does not extract.
   basic-tests = basic.tests;
 
+  bundle-prefix =
+    assert
+      bundlePrefix.tests.targets.bundle-probe.files == [ "${bundlePrefix.tests}/bin/bundle-probe" ];
+    pkgs.runCommand "bundle-prefix-installed-control" { } ''
+      test "$(${bundlePrefix.tests}/bin/bundle-probe)" = 'bundle probe'
+      test "$(cat ${bundlePrefix.tests}/share/payload.txt)" = 'bundle payload'
+      find ${bundlePrefix.tests} \( -type f -o -type l \) -printf '%P\n' | sort > actual
+      printf 'bin/bundle-probe\nshare/payload.txt\n' > expected
+      diff -u expected actual
+      cp actual $out
+    '';
+
   # The installed program runs, with fmt and argparse from the lockfile.
   basic-runs = pkgs.runCommand "basic-runs" { } ''
     out_text=$(${basicPackage}/bin/greet --name purifier)
@@ -265,6 +287,11 @@ in
   # records of each kind.
   lock-records = pkgs.runCommand "lock-records" { } ''
     ${pkgs.python3}/bin/python3 -I ${../lock/test_records.py} ${../lock}
+    touch $out
+  '';
+
+  lock-installed = pkgs.runCommand "lock-installed" { } ''
+    ${pkgs.python3}/bin/python3 -I ${../lock/test_installed.py} ${../lock}
     touch $out
   '';
 
