@@ -72,6 +72,11 @@ def generate(spec, destination, proof):
         if actual!=record['sha256']:raise ValueError('schema does not match captured resource hash: '+name)
         hashes[name]=actual
 
+    runtime=json.loads(Path(spec['runtimeProof']).read_text())
+    if runtime['compilerVersion'] != version:
+        raise ValueError('native Perl runtime differs from selected Thrift compiler')
+    if spec['name'] == runtime['nativeMetadata']['name']:
+        raise ValueError('generated package must not impersonate the native SDK distribution')
     # Generate every native program separately. This exposes output collisions
     # before the recursive generator could silently overwrite a shared namespace.
     isolated=output/'programs';isolated.mkdir()
@@ -82,17 +87,15 @@ def generate(spec, destination, proof):
         for path in sorted(folder.rglob('*')):
             if not path.is_file() or path.name.endswith('-compiler.log'):continue
             if path.suffix != ".pm" or path.is_symlink():raise ValueError("unexpected native Perl output")
+            relative=path.relative_to(folder).as_posix()
+            if relative in runtime['modules']:
+                raise ValueError('native generated Perl module shadows selected runtime: '+relative)
             ownership.append({"program":name,"file":str(path.resolve())})
             target=generated/path.relative_to(folder)
             if target.exists():
                 raise ValueError('native generated Perl output collision: '+str(path.relative_to(folder)))
             else:
                 target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,target)
-    runtime=json.loads(Path(spec['runtimeProof']).read_text())
-    if runtime['compilerVersion'] != version:
-        raise ValueError('native Perl runtime differs from selected Thrift compiler')
-    if spec['name'] == runtime['nativeMetadata']['name']:
-        raise ValueError('generated package must not impersonate the native SDK distribution')
     destination.mkdir(parents=True)
     shutil.copytree(generated,destination/'lib')
     metadata={'name':spec['name'],'version':spec['version'],
