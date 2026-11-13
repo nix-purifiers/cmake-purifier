@@ -92,29 +92,32 @@ assert reject {
 };
 assert missingBuilder;
 pkgs.runCommand "flatbuffers-java-native-consumers"
-  ({
-    nativeBuildInputs = [
-      pkgs.python3
-      pkgs.jdk
-      pkgs.gradle
-      pkgs.stdenv.cc
-      pkgs.pkg-config
-    ];
-    buildInputs = [ pkgs.flatbuffers ];
-    spec = builtins.toJSON {
-      versions = [
-        (make source1 32)
-        (make source2 64)
+  (
+    {
+      nativeBuildInputs = [
+        pkgs.python3
+        pkgs.jdk
+        pkgs.gradle
+        pkgs.stdenv.cc
+        pkgs.pkg-config
       ];
-      consumer = "${./flatbuffers-java}/Consumer.java";
-      generator = ../pkgs/flatbuffers-java-products/generate.py;
-      publisherSource = "${../pkgs/flatbuffers-java-products}/Publish.java";
-      cppConsumer = ./flatbuffers-python/consumer.cpp;
-    };
-    passAsFile = [ "spec" ];
-  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
-    __darwinAllowLocalNetworking = true;
-  })
+      buildInputs = [ pkgs.flatbuffers ];
+      spec = builtins.toJSON {
+        versions = [
+          (make source1 32)
+          (make source2 64)
+        ];
+        consumer = "${./flatbuffers-java}/Consumer.java";
+        generator = ../pkgs/flatbuffers-java-products/generate.py;
+        publisherSource = "${../pkgs/flatbuffers-java-products}/Publish.java";
+        cppConsumer = ./flatbuffers-python/consumer.cpp;
+      };
+      passAsFile = [ "spec" ];
+    }
+    // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+      __darwinAllowLocalNetworking = true;
+    }
+  )
   ''
     export HOME="$TMPDIR/home" GRADLE_USER_HOME="$TMPDIR/gradle-home"
     mkdir -p "$HOME"

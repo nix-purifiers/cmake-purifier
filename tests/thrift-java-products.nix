@@ -102,30 +102,33 @@ in
 assert reject;
 assert missingProjector;
 pkgs.runCommand "thrift-java-native-consumers"
-  ({
-    nativeBuildInputs = [
-      pkgs.gradle
-      pkgs.jdk
-      pkgs.python3
-      pkgs.stdenv.cc
-      pkgs.pkg-config
-    ];
-    buildInputs = [ pkgs.thrift ];
-    spec = builtins.toJSON {
-      versions = [
-        (make source1)
-        (make source2)
+  (
+    {
+      nativeBuildInputs = [
+        pkgs.gradle
+        pkgs.jdk
+        pkgs.python3
+        pkgs.stdenv.cc
+        pkgs.pkg-config
       ];
-      consumer = "${./thrift-java}/Consumer.java";
-      generator = ../pkgs/thrift-java-products/generate.py;
-      runtimeCatalog = (make source1).runtimeCatalog;
-      cppConsumer = ./thrift/consumer.cpp;
-      dlLibs = pkgs.lib.optionals (!pkgs.stdenv.buildPlatform.isDarwin) [ "-ldl" ];
-    };
-    passAsFile = [ "spec" ];
-  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
-    __darwinAllowLocalNetworking = true;
-  })
+      buildInputs = [ pkgs.thrift ];
+      spec = builtins.toJSON {
+        versions = [
+          (make source1)
+          (make source2)
+        ];
+        consumer = "${./thrift-java}/Consumer.java";
+        generator = ../pkgs/thrift-java-products/generate.py;
+        runtimeCatalog = (make source1).runtimeCatalog;
+        cppConsumer = ./thrift/consumer.cpp;
+        dlLibs = pkgs.lib.optionals (!pkgs.stdenv.buildPlatform.isDarwin) [ "-ldl" ];
+      };
+      passAsFile = [ "spec" ];
+    }
+    // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+      __darwinAllowLocalNetworking = true;
+    }
+  )
   ''
     python ${./thrift-java/consume.py} "$specPath" "$out"
   ''
