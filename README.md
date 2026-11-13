@@ -681,3 +681,21 @@ The `.projections.otp.applicationRoot` view composes the native compiled
 schema and runtime applications for `ERL_LIBS`. The native Erlang compiler supplies
 module metadata, and generated source bytes remain unchanged. The selected
 `beamPackages` and `thrift` packages remain overridable through the package scope.
+
+Native Thrift Perl libraries can be selected with
+`thriftPerlPackage = { name = "Example::Types"; version = "1.0.0"; };`
+and captured Thrift resource roots and entrypoints. The result is
+`packages.thrift-perl-bindings`, installed by native ExtUtils::MakeMaker.
+Its `runtime` is the original matching SDK library, `source` retains the
+unchanged generated modules and native build metadata, and `perl` is the
+selected interpreter environment. Set `thriftPerlRuntime` to supply another
+Perl environment with the SDK's native runtime requirements. The default
+uses the package scope's Perl with Bit::Vector and Class::Accessor; native
+metadata checks the installed requirements and compiler/runtime versions.
+
+Load the generated library and SDK with their `lib/perl5` directories on
+`PERL5LIB`. Each active IDL program is generated independently, and conflicting
+module paths fail before installation. Declare distinct native Perl namespaces
+for programs that would otherwise both emit `Types.pm` or `Constants.pm`.
+Generated module bytes are preserved through native installation. This
+installed-library product does not yet provide a Carton dependency projection.

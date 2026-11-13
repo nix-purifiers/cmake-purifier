@@ -121,6 +121,8 @@
   thriftRubyPackage ? null,
   thriftDartPackage ? null,
   thriftRubyDependencies ? [ ],
+  thriftPerlPackage ? null,
+  thriftPerlRuntime ? null,
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
   preConfigure ? "",
@@ -216,6 +218,25 @@ else
       resources = resourceViews.resources;
       inherit thriftDartPackage;
     };
+    thriftPerl =
+      callPackage ../thrift-perl-products
+        {
+          perl =
+            if thriftPerlRuntime != null then
+              thriftPerlRuntime
+            else
+              callPackage (
+                { perl }:
+                perl.withPackages (ps: [
+                  ps.BitVector
+                  ps.ClassAccessor
+                ])
+              ) { };
+        }
+        {
+          resources = resourceViews.resources;
+          inherit thriftPerlPackage;
+        };
     flatbuffersPython = callPackage ../flatbuffers-python-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit flatbuffersPythonPackage;
@@ -384,6 +405,8 @@ else
         "thriftRubyPackage"
         "thriftDartPackage"
         "thriftRubyDependencies"
+        "thriftPerlPackage"
+        "thriftPerlRuntime"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
         # Replay listens only on loopback. Keep external outbound networking denied
@@ -506,6 +529,10 @@ else
     || (resourceRoots != { } && pname != "thrift-dart-bindings")
     || throw "cmake-purifier: thriftDartPackage requires captured resources and a distinct project name";
   assert
+    thriftPerlPackage == null
+    || (resourceRoots != { } && pname != "thrift-perl-bindings")
+    || throw "cmake-purifier: thriftPerlPackage requires captured resources and a distinct project name";
+  assert
     flatbuffersPythonPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-python-bindings" && thriftPythonPackage == null)
     || throw "cmake-purifier: flatbuffersPythonPackage requires resourceRoots, a distinct project name, and its own Python projection";
@@ -554,6 +581,7 @@ else
     // lib.optionalAttrs (thriftRubyPackage != null) { thrift-ruby-bindings = thriftRuby; }
     // lib.optionalAttrs (thriftDartPackage != null) { thrift-dart-bindings = thriftDart; }
     // lib.optionalAttrs (thriftErlangPackage != null) { thrift-erlang-bindings = thriftErlang; }
+    // lib.optionalAttrs (thriftPerlPackage != null) { thrift-perl-bindings = thriftPerl; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;
     }
