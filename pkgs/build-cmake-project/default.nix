@@ -113,6 +113,8 @@
   thriftGoPackage ? null,
   thriftGoProjector ? null,
   thriftPythonPackage ? null,
+  thriftRubyPackage ? null,
+  thriftRubyDependencies ? [ ],
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
   preConfigure ? "",
@@ -184,6 +186,10 @@ else
     thriftPython = callPackage ../thrift-python-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftPythonPackage;
+    };
+    thriftRuby = callPackage ../thrift-ruby-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftRubyPackage thriftRubyDependencies;
     };
     flatbuffersPython = callPackage ../flatbuffers-python-products { inherit purifier; } {
       resources = resourceViews.resources;
@@ -283,6 +289,7 @@ else
       // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
       // lib.optionalAttrs (thriftCGLibPackage != null) { thrift-c-glib = thriftCGLib; }
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
+      // lib.optionalAttrs (thriftRubyPackage != null) thriftRuby.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // schemaJvm
       // lib.optionalAttrs (flatbuffersTypeScriptPackage != null) {
@@ -332,6 +339,8 @@ else
         "thriftGoPackage"
         "thriftGoProjector"
         "thriftPythonPackage"
+        "thriftRubyPackage"
+        "thriftRubyDependencies"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
         # Replay listens only on loopback. Keep external outbound networking denied
@@ -438,6 +447,10 @@ else
     || (resourceRoots != { } && pname != "thrift-python-bindings")
     || throw "cmake-purifier: thriftPythonPackage requires resourceRoots and a project name other than thrift-python-bindings";
   assert
+    thriftRubyPackage == null
+    || (resourceRoots != { } && pname != "thrift-ruby-bindings")
+    || throw "cmake-purifier: thriftRubyPackage requires captured resources and a distinct project name";
+  assert
     flatbuffersPythonPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-python-bindings" && thriftPythonPackage == null)
     || throw "cmake-purifier: flatbuffersPythonPackage requires resourceRoots, a distinct project name, and its own Python projection";
@@ -479,6 +492,7 @@ else
     // lib.optionalAttrs (thriftCGLibPackage != null) { thrift-c-glib-bindings = thriftCGLib; }
     // lib.optionalAttrs (thriftJavaPackage != null) { thrift-java-bindings = thriftJava; }
     // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
+    // lib.optionalAttrs (thriftRubyPackage != null) { thrift-ruby-bindings = thriftRuby; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;
     }

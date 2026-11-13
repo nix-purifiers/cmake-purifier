@@ -618,3 +618,20 @@ The adapter retains the full SDK tree and builds from `lib/java`, preserving its
 Native Thrift verbose input traces and JSON models establish the complete captured include graph. Each native program generates independently with Jakarta and undated generated annotations; original generated source bytes are preserved and conflicting Java outputs fail. Native Gradle compiles the library and publishes its POM, module metadata and source archive. Its compile target comes from the actual SDK `TBase.class`; its compile classpath includes the SDK's resolved runtime configuration, without mapping Java imports to guessed artifact names. One captured schema resource closure produces one JVM publication; separate external schema package ownership and a blanket JVM compatibility range are not inferred.
 
 For these Maven-native Java outputs, the Ivy view is produced by the selected Gradle SDK's Apache Ivy POM parser and descriptor writer. That native converter resolves parents, scopes and available source/Javadoc classifiers from the completed local Maven view, preserves its published coordinates and artifact bytes, and permits no HTTP input. It fixes only the generated descriptor's publication date to the standard 1980 epoch. This supplies a real Ivy repository; requesting an Ivy format from the shared JVM projector alone preserves existing Ivy publications and does not convert Maven descriptors.
+
+Native Thrift Ruby packages can be selected with
+`thriftRubyPackage = { name = "example-types"; version = "1.0.0"; };`
+and `thriftRubyDependencies = [ loggerProject ];`, alongside the captured
+Thrift resource roots and entrypoints. Dependency projects carry their
+`projections.rubygems` repositories; supply the runtime dependencies declared
+by the selected SDK's native gemspec. Missing dependencies fail through the
+native offline installer.
+
+`packages.thrift-ruby-bindings` is the native schema gem, and
+`projections.rubygems` is its composed repository. `sdkRuntime` exposes the
+matching native SDK gem and its repository. Generation uses the compiler's
+`rb:namespaced` layout, so Ruby `require` paths follow the declared native
+namespaces. Compiler-generated Ruby bytes are preserved. Native Ruby parsing
+checks class and constant ownership across active programs, and packaging
+verifies the gem's source bytes against the compiler output. The caller's
+Ruby and Thrift packages remain overridable through the package scope.
