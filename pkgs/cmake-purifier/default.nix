@@ -65,7 +65,8 @@
   legacySdkAdapter ? null,
   writeShellApplication,
   runtimeShell,
-  cmake,
+  # Null keeps the caller runtime for the modern local development workflow.
+  cmake ? null,
   git,
   mercurial,
   subversion,
@@ -96,8 +97,9 @@ let
 in
 if nativeProfile == "legacy-external-v1" then
   pkgs.callPackage ./legacy.nix {
+    # The explicit legacy profile retains its existing packaged SDK default.
+    cmake = if cmake == null then pkgs.cmake else cmake;
     inherit
-      cmake
       legacyProjectName
       legacySdkAdapter
       purifier
@@ -108,8 +110,7 @@ else if nativeProfile != "modern-v1" then
 else
   writeShellApplication {
     name = "cmake-purifier";
-    runtimeInputs = [
-      cmake
+    runtimeInputs = pkgs.lib.optionals (cmake != null) [ cmake ] ++ [
       jq
       mitmproxy
       mitm-cache
@@ -208,6 +209,8 @@ else
 
       lock() {
         [ -f "$source/CMakeLists.txt" ] || die "$source has no CMakeLists.txt"
+        command -v cmake >/dev/null 2>&1 ||
+          die "cmake is not on PATH; activate your existing CMake installation before locking"
         started=$SECONDS
         # The physical path, as the tools record their working directories:
         # on macOS the temporary directory is under the symlinks /var or /tmp.
@@ -319,6 +322,8 @@ else
             -DSubversion_SVN_EXECUTABLE="$work/svn" \
             -DCVS_EXECUTABLE="$work/cvs" \
             ''${args[@]+"''${args[@]}"} >&2
+          [ -f "$work/observed.json" ] ||
+            die "the dependency-capture hook did not run; CMake must support CMAKE_PROJECT_TOP_LEVEL_INCLUDES and dependency providers (upstream CMake 3.24+), and the project must preserve the supplied hook"
           if [ -z "$noBuild" ]; then
             echo "cmake-purifier: building $source to record what the build downloads" >&2
             # A bare --parallel lets make start any number of jobs.
@@ -366,8 +371,10 @@ else
         cache=$state/initial-cache.txt
         bash "$nixlib/write-cache.sh" "$tree" "$state/sources" "$cache" \
           "$lockedProvider" "$nixlib" "$realGit" "$realHg" "$realSvn" "$realCvs"
-        # The configure arguments of the lock run, as cache entries.
+        # Recording defaults precede explicit lock arguments, which win.
         {
+          echo 'set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)'
+          echo 'set(CMAKE_INSTALL_LIBDIR lib CACHE PATH "" FORCE)'
           echo 'set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "" FORCE)'
           jq -r '.cmakeFlags[]' "$lockfile" | while IFS= read -r flag; do
             case "$flag" in

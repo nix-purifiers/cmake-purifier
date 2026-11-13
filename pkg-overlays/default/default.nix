@@ -27,6 +27,8 @@
     cmake-purifier = final.lib.makeScope final.newScope (self: {
       cmake-purifier = self.callPackage ../../pkgs/cmake-purifier {
         purifier = closure-inputs.purifier;
+        # Keep local CMake on PATH unless the scope explicitly selects an SDK.
+        cmake = self.cmake or null;
       };
       buildCMakeProject = self.callPackage ../../pkgs/build-cmake-project/default.nix {
         inherit (closure-lib) purifier;

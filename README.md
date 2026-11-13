@@ -7,10 +7,10 @@ optional next step.
 
 ## Quickstart
 
-From the project root:
+From the project root, with your existing CMake and C/C++ compiler environment:
 
 ```zsh
-nix shell 'github:nix-purifiers/cmake-purifier#toolchain'
+nix shell 'github:nix-purifiers/cmake-purifier#cmake-purifier'
 cmake-purifier lock
 cmake-purifier prefetch
 cmake -B build -C .cmake-purifier/initial-cache.txt
@@ -23,6 +23,12 @@ tool's own lockfile when it has one. Keep using the project's usual build,
 test and editor commands with this setup. Nix provides the locked
 dependencies; the development commands above run outside the Nix sandbox.
 No project Nix files are needed for this workflow.
+
+The command uses the CMake on your `PATH`, your `CC`/`CXX` settings, and explicit
+toolchain arguments. Local locking and prefetching do not require a Nix CMake
+or compiler SDK. Capture needs CMake's dependency-provider and top-level-include
+features, introduced upstream in CMake 3.24. Packaged SDK selection for a full
+sandboxed project build is separate from this local workflow.
 
 For downloads outside FetchContent, use the replay commands described in
 [Development loop](#development-loop).
