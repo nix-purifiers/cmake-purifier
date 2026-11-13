@@ -102,7 +102,7 @@ in
 assert reject;
 assert missingProjector;
 pkgs.runCommand "thrift-java-native-consumers"
-  {
+  ({
     nativeBuildInputs = [
       pkgs.gradle
       pkgs.jdk
@@ -120,10 +120,12 @@ pkgs.runCommand "thrift-java-native-consumers"
       generator = ../pkgs/thrift-java-products/generate.py;
       runtimeCatalog = (make source1).runtimeCatalog;
       cppConsumer = ./thrift/consumer.cpp;
-      dlLibs = pkgs.lib.optionals (!pkgs.stdenv.hostPlatform.isDarwin) [ "-ldl" ];
+      dlLibs = pkgs.lib.optionals (!pkgs.stdenv.buildPlatform.isDarwin) [ "-ldl" ];
     };
     passAsFile = [ "spec" ];
-  }
+  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+    __darwinAllowLocalNetworking = true;
+  })
   ''
     python ${./thrift-java/consume.py} "$specPath" "$out"
   ''
