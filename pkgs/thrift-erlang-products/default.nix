@@ -35,6 +35,7 @@ let
           python3
         ];
         ERL_FLAGS = "+S 2:2";
+        PURIFIER_ERLANG_RUNTIME = toString erlang;
         passthru = {
           sdk = thrift;
           sdkSource = thrift.src;
@@ -67,6 +68,7 @@ let
           python3
         ];
         ERL_FLAGS = "+S 2:2";
+        PURIFIER_ERLANG_RUNTIME = toString erlang;
         spec = builtins.toJSON {
           resources = toString resources;
           sdk = toString thrift;

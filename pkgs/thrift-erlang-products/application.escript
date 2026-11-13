@@ -27,5 +27,10 @@ main([Template, Name, Version, Ebin, RuntimeEbin]) ->
     Terms = {application, App, lists:keystore(modules, 1, Properties, {modules, Modules})},
     ok = file:write_file(filename:join(Ebin, atom_to_list(App) ++ ".app"), io_lib:format("~p.~n", [Terms])),
     ok = file:write_file(filename:join(Ebin, "otp-observation.term"), io_lib:format("~p.~n", [
-        #{otp => erlang:system_info(otp_release), erts => erlang:system_info(version), modules => Modules, compiled => Compiled}
+        #{otp => erlang:system_info(otp_release), erts => erlang:system_info(version),
+          architecture => erlang:system_info(system_architecture),
+          nifVersion => erlang:system_info(nif_version),
+          runtime => os:getenv("PURIFIER_ERLANG_RUNTIME"), runtimeRoot => code:root_dir(),
+          compiler => code:which(compile), erlc => os:find_executable("erlc"),
+          modules => Modules, compiled => Compiled}
     ])).
