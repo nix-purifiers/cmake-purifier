@@ -3,6 +3,7 @@
   callPackage,
   lib,
   runCommand,
+  stdenv,
   python3,
   jdk,
   gradle,
@@ -57,6 +58,8 @@ let
   runtime = project.packages.${model.rootProjectName}.overrideAttrs (_: {
     sourceRoot = "${prepared.name}/lib/java";
     nativeIvyConverter = ../maven-ivy-products;
+  } // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
+    __darwinAllowLocalNetworking = true;
   });
   runtimeViews = purifier.jvmProjections {
     producer = runtime;
@@ -70,7 +73,7 @@ let
   };
   generated =
     runCommand "thrift-generated-java-package"
-      {
+      ({
         nativeBuildInputs = [
           python3
           jdk
@@ -94,7 +97,9 @@ let
           schemaResources = resources;
           sdkSource = prepared;
         };
-      }
+      } // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
+        __darwinAllowLocalNetworking = true;
+      })
       ''
         export HOME="$TMPDIR/home" GRADLE_USER_HOME="$TMPDIR/gradle-home" JAVA_HOME=${jdk}
         mkdir -p "$HOME"

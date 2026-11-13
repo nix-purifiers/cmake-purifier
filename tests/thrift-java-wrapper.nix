@@ -8,7 +8,7 @@ pkgs.runCommand "thrift-java-native-gradle-wrapper"
       nativeGradle
       pkgs.jdk17_headless
     ];
-  } // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
     # Gradle uses a local socket for native file-lock contention handling.
     __darwinAllowLocalNetworking = true;
   })

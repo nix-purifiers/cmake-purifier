@@ -162,7 +162,7 @@ in
 assert missingResources;
 assert missingBuilder;
 pkgs.runCommand "thrift-javascript-native-consumers"
-  {
+  ({
     nativeBuildInputs = [
       pkgs.python3
       pkgs.nodejs
@@ -187,10 +187,12 @@ pkgs.runCommand "thrift-javascript-native-consumers"
       javaConsumer = ./flatbuffers-typescript/ResourceConsumer.java;
       chromium = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.chromium}/bin/chromium" else null;
       originalTypes = ./fixtures/thrift-javascript-types;
-      dlLibs = pkgs.lib.optionals (!pkgs.stdenv.hostPlatform.isDarwin) [ "-ldl" ];
+      dlLibs = pkgs.lib.optionals (!pkgs.stdenv.buildPlatform.isDarwin) [ "-ldl" ];
     };
     passAsFile = [ "spec" ];
-  }
+  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+    __darwinAllowLocalNetworking = true;
+  })
   ''
     export HOME="$TMPDIR/home" npm_config_cache="$TMPDIR/npm-cache"
     mkdir -p "$HOME"

@@ -92,7 +92,7 @@ assert reject {
 };
 assert missingBuilder;
 pkgs.runCommand "flatbuffers-java-native-consumers"
-  {
+  ({
     nativeBuildInputs = [
       pkgs.python3
       pkgs.jdk
@@ -112,7 +112,9 @@ pkgs.runCommand "flatbuffers-java-native-consumers"
       cppConsumer = ./flatbuffers-python/consumer.cpp;
     };
     passAsFile = [ "spec" ];
-  }
+  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+    __darwinAllowLocalNetworking = true;
+  })
   ''
     export HOME="$TMPDIR/home" GRADLE_USER_HOME="$TMPDIR/gradle-home"
     mkdir -p "$HOME"
