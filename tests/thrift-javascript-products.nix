@@ -162,37 +162,40 @@ in
 assert missingResources;
 assert missingBuilder;
 pkgs.runCommand "thrift-javascript-native-consumers"
-  ({
-    nativeBuildInputs = [
-      pkgs.python3
-      pkgs.nodejs
-      pkgs.stdenv.cc
-      pkgs.pkg-config
-      pkgs.jdk
-      pkgs.gradle
-      compiler
-    ];
-    buildInputs = [ pkgs.thrift ];
-    spec = builtins.toJSON {
-      versions = [
-        (make source1 true false)
-        (make source2 true false)
+  (
+    {
+      nativeBuildInputs = [
+        pkgs.python3
+        pkgs.nodejs
+        pkgs.stdenv.cc
+        pkgs.pkg-config
+        pkgs.jdk
+        pkgs.gradle
+        compiler
       ];
-      noTypes = make source1 false false;
-      aliases = make source1 true true;
-      consumer = ./thrift-javascript/consumer.cjs;
-      typescriptConsumer = ./thrift-javascript/consumer.ts;
-      generator = ../pkgs/thrift-javascript-products/generate.py;
-      cppConsumer = ./thrift/consumer.cpp;
-      javaConsumer = ./flatbuffers-typescript/ResourceConsumer.java;
-      chromium = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.chromium}/bin/chromium" else null;
-      originalTypes = ./fixtures/thrift-javascript-types;
-      dlLibs = pkgs.lib.optionals (!pkgs.stdenv.buildPlatform.isDarwin) [ "-ldl" ];
-    };
-    passAsFile = [ "spec" ];
-  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
-    __darwinAllowLocalNetworking = true;
-  })
+      buildInputs = [ pkgs.thrift ];
+      spec = builtins.toJSON {
+        versions = [
+          (make source1 true false)
+          (make source2 true false)
+        ];
+        noTypes = make source1 false false;
+        aliases = make source1 true true;
+        consumer = ./thrift-javascript/consumer.cjs;
+        typescriptConsumer = ./thrift-javascript/consumer.ts;
+        generator = ../pkgs/thrift-javascript-products/generate.py;
+        cppConsumer = ./thrift/consumer.cpp;
+        javaConsumer = ./flatbuffers-typescript/ResourceConsumer.java;
+        chromium = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.chromium}/bin/chromium" else null;
+        originalTypes = ./fixtures/thrift-javascript-types;
+        dlLibs = pkgs.lib.optionals (!pkgs.stdenv.buildPlatform.isDarwin) [ "-ldl" ];
+      };
+      passAsFile = [ "spec" ];
+    }
+    // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+      __darwinAllowLocalNetworking = true;
+    }
+  )
   ''
     export HOME="$TMPDIR/home" npm_config_cache="$TMPDIR/npm-cache"
     mkdir -p "$HOME"

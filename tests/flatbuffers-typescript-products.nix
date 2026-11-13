@@ -93,32 +93,35 @@ let
     };
 in
 pkgs.runCommand "flatbuffers-typescript-native-consumers"
-  ({
-    nativeBuildInputs = [
-      pkgs.python3
-      pkgs.nodejs
-      pkgs.jdk
-      pkgs.gradle
-      pkgs.stdenv.cc
-      pkgs.pkg-config
-    ]
-    ++ pkgs.lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.chromium;
-    buildInputs = [ pkgs.flatbuffers ];
-    spec = builtins.toJSON {
-      javaConsumer = "${./flatbuffers-typescript}/ResourceConsumer.java";
-      chromium = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.chromium}/bin/chromium" else null;
-      versions = [
-        (make source1 32)
-        (make source2 64)
-      ];
-      consumer = ./flatbuffers-typescript/consumer.js;
-      generator = ../pkgs/flatbuffers-typescript-products/generate.py;
-      cppConsumer = ./flatbuffers-python/consumer.cpp;
-    };
-    passAsFile = [ "spec" ];
-  } // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
-    __darwinAllowLocalNetworking = true;
-  })
+  (
+    {
+      nativeBuildInputs = [
+        pkgs.python3
+        pkgs.nodejs
+        pkgs.jdk
+        pkgs.gradle
+        pkgs.stdenv.cc
+        pkgs.pkg-config
+      ]
+      ++ pkgs.lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.chromium;
+      buildInputs = [ pkgs.flatbuffers ];
+      spec = builtins.toJSON {
+        javaConsumer = "${./flatbuffers-typescript}/ResourceConsumer.java";
+        chromium = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.chromium}/bin/chromium" else null;
+        versions = [
+          (make source1 32)
+          (make source2 64)
+        ];
+        consumer = ./flatbuffers-typescript/consumer.js;
+        generator = ../pkgs/flatbuffers-typescript-products/generate.py;
+        cppConsumer = ./flatbuffers-python/consumer.cpp;
+      };
+      passAsFile = [ "spec" ];
+    }
+    // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
+      __darwinAllowLocalNetworking = true;
+    }
+  )
   ''
     export HOME="$TMPDIR/home"
     mkdir -p "$HOME"

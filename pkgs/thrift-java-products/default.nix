@@ -55,12 +55,16 @@ let
   };
   # The SDK's own build refers to ../../LICENSE, NOTICE and test schemas.
   # Keep that native layout rather than flattening lib/java into a new root.
-  runtime = project.packages.${model.rootProjectName}.overrideAttrs (_: {
-    sourceRoot = "${prepared.name}/lib/java";
-    nativeIvyConverter = ../maven-ivy-products;
-  } // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
-    __darwinAllowLocalNetworking = true;
-  });
+  runtime = project.packages.${model.rootProjectName}.overrideAttrs (
+    _:
+    {
+      sourceRoot = "${prepared.name}/lib/java";
+      nativeIvyConverter = ../maven-ivy-products;
+    }
+    // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
+      __darwinAllowLocalNetworking = true;
+    }
+  );
   runtimeViews = purifier.jvmProjections {
     producer = runtime;
     repository = runtime.maven;
@@ -73,33 +77,36 @@ let
   };
   generated =
     runCommand "thrift-generated-java-package"
-      ({
-        nativeBuildInputs = [
-          python3
-          jdk
-          gradle
-          thrift
-        ];
-        spec = builtins.toJSON {
-          resources = toString resources;
-          sdk = toString thrift;
-          sdkSource = toString thrift.src;
-          runtimeNativeRepository = toString runtime.maven;
-          runtimeRepository = toString runtimeViews.maven;
-          runtimeCatalog = runtimeViews.maven.catalog;
-          runtimeSource = toString prepared;
-          inherit publication;
-          package = options;
-        };
-        passAsFile = [ "spec" ];
-        passthru = {
-          sdkRuntime = provider;
-          schemaResources = resources;
-          sdkSource = prepared;
-        };
-      } // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
-        __darwinAllowLocalNetworking = true;
-      })
+      (
+        {
+          nativeBuildInputs = [
+            python3
+            jdk
+            gradle
+            thrift
+          ];
+          spec = builtins.toJSON {
+            resources = toString resources;
+            sdk = toString thrift;
+            sdkSource = toString thrift.src;
+            runtimeNativeRepository = toString runtime.maven;
+            runtimeRepository = toString runtimeViews.maven;
+            runtimeCatalog = runtimeViews.maven.catalog;
+            runtimeSource = toString prepared;
+            inherit publication;
+            package = options;
+          };
+          passAsFile = [ "spec" ];
+          passthru = {
+            sdkRuntime = provider;
+            schemaResources = resources;
+            sdkSource = prepared;
+          };
+        }
+        // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
+          __darwinAllowLocalNetworking = true;
+        }
+      )
       ''
         export HOME="$TMPDIR/home" GRADLE_USER_HOME="$TMPDIR/gradle-home" JAVA_HOME=${jdk}
         mkdir -p "$HOME"
