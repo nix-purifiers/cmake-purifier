@@ -14,12 +14,6 @@ def generate(spec,out):
     if catalog['format']!='purifier-resources-v1' or catalog['schema']['format']!='thrift':
         raise ValueError('expected an explicitly selected Thrift schema bundle')
     names={}
-    for name in catalog['files']:
-        path=PurePosixPath(name)
-        if path.suffix=='.thrift':
-            if path.stem in names:
-                raise ValueError('ambiguous native program output name: '+path.stem)
-            names[path.stem]=name
     sdk=Path(spec['sdk']);compiler=str(sdk/'bin/thrift')
     version=subprocess.check_output([compiler,'--version'],text=True).strip()
     native_version=re.fullmatch(r'Thrift version (\d+\.\d+\.\d+)',version)
@@ -41,7 +35,7 @@ def generate(spec,out):
             if not actual.is_relative_to(root):raise ValueError('native compiler input escapes captured schema tree: '+source)
             logical=actual.relative_to(root).as_posix()
             if logical not in catalog['files']:raise ValueError('native compiler input absent from captured catalog: '+logical)
-            if names.get(actual.stem)!=logical:raise ValueError('ambiguous native program source: '+logical)
+            if names.setdefault(actual.stem,logical)!=logical:raise ValueError('ambiguous active native program source: '+logical)
             evidence[phase].add(logical)
         if not evidence['Program'] or evidence['Scanning']!=evidence['Parsing']:
             raise ValueError('incomplete native compiler input evidence')

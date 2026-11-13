@@ -311,7 +311,7 @@ else
       // lib.optionalAttrs (flatbuffersGoPackage != null) flatbuffersGo.projections
       // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections
       // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections
-      // lib.optionalAttrs (thriftJavaScriptPackage != null) thriftJavaScript.projections;
+      // lib.optionalAttrs (thriftJavaScriptPackage != null) thriftJavaScript.projections
       // lib.optionalAttrs (thriftRustPackage != null) thriftRust.projections;
 
     package = stdenv.mkDerivation (
@@ -494,14 +494,12 @@ else
     || throw "cmake-purifier: thriftGoPackage requires resourceRoots and a distinct project name";
   assert
     flatbuffersRustPackage == null
-    || (resourceRoots != { } && pname != "flatbuffers-rust-bindings")
-    || throw "cmake-purifier: flatbuffersRustPackage requires resourceRoots and a distinct project name";
+    || (resourceRoots != { } && pname != "flatbuffers-rust-bindings" && thriftRustPackage == null)
+    || throw "cmake-purifier: flatbuffersRustPackage requires resourceRoots, a distinct project name and its own Rust projection";
   assert
     thriftJavaScriptPackage == null
     || (resourceRoots != { } && pname != "thrift-javascript-bindings")
     || throw "cmake-purifier: thriftJavaScriptPackage requires resourceRoots and a distinct project name";
-    || (resourceRoots != { } && pname != "flatbuffers-rust-bindings" && thriftRustPackage == null)
-    || throw "cmake-purifier: flatbuffersRustPackage requires resourceRoots, a distinct project name and its own Rust projection";
   assert
     thriftRustPackage == null
     || (resourceRoots != { } && pname != "thrift-rust-bindings")

@@ -49,7 +49,22 @@ let
             pkgs.rustPlatform.fetchCargoVendor (
               args // { hash = "sha256-0JrEFt/ZFkRlMvwlKiO2YzjvLLjdR9p+8CIwLTFExB8="; }
             );
-          thriftRustProjector = projector;
+          thriftRustProjector =
+            args:
+            projector (
+              args
+              // {
+                publicationSourceArchives = [
+                  {
+                    checksum = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa";
+                    archive = pkgs.fetchurl {
+                      url = "https://static.crates.io/crates/threadpool/threadpool-1.8.1.crate";
+                      sha256 = "d050e60b33d41c19108b32cea32164033a9013fe3b46cbd4457559bfbf77afaa";
+                    };
+                  }
+                ];
+              }
+            );
         }
       );
       package = built.packages.thrift-rust-bindings;

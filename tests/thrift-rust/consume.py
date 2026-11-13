@@ -57,7 +57,7 @@ def reject(name,resources,exception,message=None,runtime=None):
 missing=bundle('missing-import');(missing/'files/common/value.thrift').unlink();reject('missing-import',missing,subprocess.CalledProcessError)
 corrupt=bundle('changed-source');path=corrupt/'files/common/value.thrift';path.write_text(path.read_text()+'// uncaptured change\n');reject('changed-source',corrupt,ValueError,'does not match captured resource hash')
 outside=bundle('outside-import');foreign=Path('external/value.thrift').resolve();foreign.parent.mkdir();foreign.write_text((outside/'files/common/value.thrift').read_text());update(outside,'main.thrift',(outside/'files/main.thrift').read_text().replace('common/value.thrift',os.path.relpath(foreign,outside/'files')));reject('outside-import',outside,ValueError,'native compiler input escapes')
-overlap=bundle('ambiguous-program');update(overlap,'other/value.thrift','struct Value { 1: i32 other }');reject('ambiguous-program',overlap,ValueError,'ambiguous native program output name')
+unused=bundle('unused-program');update(unused,'other/value.thrift','struct Value { 1: i32 other }');attempt('unused-program-accepted',unused)
 mismatch=Path('mismatched-sdk').resolve();shutil.copytree(model['runtimeSource'],mismatch);mismatch.chmod(0o755);manifest=mismatch/'Cargo.toml';manifest.chmod(0o644);manifest.write_text(manifest.read_text().replace('version = "0.24.0"','version = "0.25.0"'));reject('runtime-version-mismatch',Path(model['resources']),ValueError,'native Rust runtime differs',mismatch)
 # A fresh ordinary Cargo consumer cannot resolve the generated crate without its SDK runtime.
 missing_runtime=Path('missing-runtime').resolve();shutil.copytree(spec['versions'][0]['repository'],missing_runtime);missing_runtime.chmod(0o755)
@@ -74,4 +74,4 @@ assert run.returncode==0,run.stderr
 run=subprocess.run(['cargo','build','--offline','--locked'],cwd=project,env=env,capture_output=True,text=True)
 assert run.returncode and 'thrift' in run.stderr,run.stderr
 print(run.stderr,file=sys.stderr);controls['missing-runtime']={'command':['cargo','build','--offline','--locked'],'exitCode':run.returncode,'requiredSdk':'thrift','diagnosticMentionsSdk':True}
-(out/'verification.json').write_text(json.dumps({'consumers':results,'rejectionControls':controls,'preservedNativeVendorFileHashes':vendor_inventory},indent=2)+'\n')
+(out/'verification.json').write_text(json.dumps({'consumers':results,'rejectionControls':controls,'unusedDuplicateProgramAccepted':True,'preservedNativeVendorFileHashes':vendor_inventory},indent=2)+'\n')

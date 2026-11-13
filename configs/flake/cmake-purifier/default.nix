@@ -102,8 +102,11 @@
                 npmPkgs.npm-purifier.buildNpmProject args;
               cargoProjector =
                 args:
-                pkgs.callPackage (inputs.cargo-projector + "/nix/lib/cargo-projections.nix") (
-                  args // { purifier = self.lib.purifier; }
+                pkgs.callPackage (inputs.cargo-projector + "/pkgs/build-cargo-project/cargo-projections.nix") (
+                  args
+                  // {
+                    purifier = self.lib.purifier;
+                  }
                 );
               inherit (self.lib) purifier;
               inherit ((pkgs.extend self.overlays.default).cmake-purifier) buildCMakeProject;
