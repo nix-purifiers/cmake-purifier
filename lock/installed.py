@@ -68,7 +68,9 @@ def read_outputs(build_dir, prefix):
         if 'install' not in target:
             continue
         names = {os.path.basename(artifact['path']) for artifact in target.get('artifacts', [])}
-        files = set()
+        # File API destinations may repeat for distinct install rules. Keep
+        # their multiplicity to preserve the existing lockfile representation.
+        files = []
         for destination in target['install']['destinations']:
             directory = Path(destination['path'])
             if '..' in directory.parts:
@@ -82,7 +84,7 @@ def read_outputs(build_dir, prefix):
             for name in names:
                 file = os.path.normpath(os.path.join(os.path.relpath(absolute, root), name))
                 if file in installed_set:
-                    files.add(file)
+                    files.append(file)
         if files:
             targets[target['name']] = {'type': target['type'], 'files': sorted(files)}
     return {'files': installed, 'targets': targets}

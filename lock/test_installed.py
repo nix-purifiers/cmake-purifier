@@ -55,6 +55,17 @@ class InstalledOutputsTest(unittest.TestCase):
             'targets': {'tool': {'type': 'EXECUTABLE', 'files': ['bin/tool']}},
         })
 
+    def test_repeated_install_destinations_preserve_lock_multiplicity(self):
+        self.fixture()
+        target_file = self.build / '.cmake/api/v1/reply/tool.json'
+        target = json.loads(target_file.read_text())
+        target['install']['destinations'].append({'path': 'bin'})
+        target_file.write_text(json.dumps(target))
+        self.assertEqual(self.read(), {
+            'files': ['bin/tool'],
+            'targets': {'tool': {'type': 'EXECUTABLE', 'files': ['bin/tool', 'bin/tool']}},
+        })
+
     def test_empty_requested_directory_does_not_hide_bundle(self):
         self.prefix.mkdir()
         bundle = self.build / 'bundle'
