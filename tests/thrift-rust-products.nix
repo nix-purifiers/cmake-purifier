@@ -82,7 +82,7 @@ let
       (build {
         src = ./fixtures/thrift-cpp;
         thriftRustPackage.name = "proof_schemas";
-      }).packages.schema_bundle.drvPath
+      }).packages.thrift-rust-bindings.drvPath
     ).success;
   missingProjector =
     !(builtins.tryEval
