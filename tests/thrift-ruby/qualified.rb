@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: MIT
 require 'json'
+require 'rbconfig'
 require 'thrift'
 gem 'thrift-ruby-proof'
 require 'root/root_types'
 require 'root/answer_service'
-raise 'native extension missing' unless $LOADED_FEATURES.any? { |path| path.end_with?('/thrift_native.so') }
+extension_suffix = '/thrift_native.' + RbConfig::CONFIG.fetch('DLEXT')
+raise 'native extension missing' unless $LOADED_FEATURES.any? { |path| path.end_with?(extension_suffix) }
 original = Root::Pair.new(left: First::Value.new(answer: 7), right: Second::Value.new(answer: 8))
 wire = Thrift::Serializer.new.serialize(original)
 decoded = Root::Pair.new
