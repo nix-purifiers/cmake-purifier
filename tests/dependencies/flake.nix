@@ -9,6 +9,7 @@
     url = "git+https://github.com/nix-purifiers/cargo-purifier?ref=refs/tags/v0.1.7";
     flake = false;
   };
+  inputs.npm-projector.url = "git+https://github.com/nix-purifiers/npm-purifier?ref=refs/tags/v0.1.13";
   inputs.go-projector.url = "github:nix-purifiers/go-purifier/v0.1.6";
   inputs.go-projector.inputs.nixpkgs.follows = "nixpkgs";
   inputs.gradle-projector = {

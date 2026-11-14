@@ -102,6 +102,12 @@
   flatbuffersGoPackage ? null,
   flatbuffersGoProjector ? null,
   flatbuffersGoRuntimeModulePath ? null,
+  thriftDocumentation ? null,
+  thriftJavaScriptPackage ? null,
+  thriftJavaScriptRuntimeBuilder ? null,
+  thriftJavaScriptDependencies ? [ ],
+  thriftJavaScriptBrowserBuilder ? null,
+  thriftJavaScriptWebjar ? null,
   thriftGoPackage ? null,
   thriftGoProjector ? null,
   thriftPythonPackage ? null,
@@ -189,6 +195,20 @@ else
       resources = resourceViews.resources;
       inherit flatbuffersGoPackage flatbuffersGoProjector flatbuffersGoRuntimeModulePath;
     };
+    thriftDocs = callPackage ../thrift-documentation-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftDocumentation;
+    };
+    thriftJavaScript = callPackage ../thrift-javascript-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit
+        thriftJavaScriptPackage
+        thriftJavaScriptRuntimeBuilder
+        thriftJavaScriptDependencies
+        thriftJavaScriptBrowserBuilder
+        thriftJavaScriptWebjar
+        ;
+    };
     thriftGo = callPackage ../thrift-go-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftGoPackage thriftGoProjector;
@@ -215,9 +235,11 @@ else
     schemaJvm =
       lib.optionalAttrs
         (
-          flatbuffersJavaPackage != null
+          (thriftDocumentation != null && (thriftDocumentation.webjar or null) != null)
+          || flatbuffersJavaPackage != null
           || thriftJavaPackage != null
           || (flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null)
+          || (thriftJavaScriptPackage != null && thriftJavaScriptWebjar != null)
         )
         (
           purifier.jvmProjections {
@@ -228,7 +250,11 @@ else
               ++ lib.optional (thriftJavaPackage != null) thriftJava
               ++ lib.optional (
                 flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null
-              ) flatbuffersTypeScript;
+              ) flatbuffersTypeScript
+              ++ lib.optional (thriftJavaScriptPackage != null && thriftJavaScriptWebjar != null) thriftJavaScript
+              ++ lib.optional (
+                thriftDocumentation != null && (thriftDocumentation.webjar or null) != null
+              ) thriftDocs;
             formats = [
               "maven"
               "ivy"
@@ -245,6 +271,7 @@ else
         inherit runCommand python3;
       })
       // resourceViews
+      // lib.optionalAttrs (thriftDocumentation != null) { thrift-documentation = thriftDocs; }
       // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; }
       // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; }
       // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
@@ -256,7 +283,8 @@ else
       }
       // lib.optionalAttrs (flatbuffersGoPackage != null) flatbuffersGo.projections
       // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections
-      // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections;
+      // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections
+      // lib.optionalAttrs (thriftJavaScriptPackage != null) thriftJavaScript.projections;
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -286,6 +314,12 @@ else
         "flatbuffersGoPackage"
         "flatbuffersGoProjector"
         "flatbuffersGoRuntimeModulePath"
+        "thriftDocumentation"
+        "thriftJavaScriptPackage"
+        "thriftJavaScriptRuntimeBuilder"
+        "thriftJavaScriptBrowserBuilder"
+        "thriftJavaScriptWebjar"
+        "thriftJavaScriptDependencies"
         "thriftGoPackage"
         "thriftGoProjector"
         "thriftPythonPackage"
@@ -367,6 +401,10 @@ else
     );
   in
   assert
+    thriftDocumentation == null
+    || (resourceRoots != { } && pname != "thrift-documentation")
+    || throw "cmake-purifier: Thrift documentation requires captured resources and a distinct project name";
+  assert
     flatbuffersPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-bindings")
     || throw "cmake-purifier: flatbuffersPackage requires resourceRoots and a project name other than flatbuffers-bindings";
@@ -396,8 +434,12 @@ else
     || throw "cmake-purifier: flatbuffersJavaPackage requires resourceRoots and a distinct project name";
   assert
     flatbuffersTypeScriptPackage == null
-    || (resourceRoots != { } && pname != "flatbuffers-typescript-bindings")
-    || throw "cmake-purifier: FlatBuffers TypeScript requires resourceRoots and a distinct project name";
+    || (
+      resourceRoots != { }
+      && pname != "flatbuffers-typescript-bindings"
+      && thriftJavaScriptPackage == null
+    )
+    || throw "cmake-purifier: FlatBuffers TypeScript requires resourceRoots, a distinct project name and its own npm projection";
   assert
     flatbuffersGoPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-go-bindings" && thriftGoPackage == null)
@@ -410,6 +452,10 @@ else
     flatbuffersRustPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-rust-bindings")
     || throw "cmake-purifier: flatbuffersRustPackage requires resourceRoots and a distinct project name";
+  assert
+    thriftJavaScriptPackage == null
+    || (resourceRoots != { } && pname != "thrift-javascript-bindings")
+    || throw "cmake-purifier: thriftJavaScriptPackage requires resourceRoots and a distinct project name";
   {
     packages = {
       ${pname} = package;
@@ -430,6 +476,10 @@ else
     }
     // lib.optionalAttrs (flatbuffersGoPackage != null) { flatbuffers-go-bindings = flatbuffersGo; }
     // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; }
+    // lib.optionalAttrs (thriftDocumentation != null) { thrift-documentation = thriftDocs; }
+    // lib.optionalAttrs (thriftJavaScriptPackage != null) {
+      thrift-javascript-bindings = thriftJavaScript;
+    }
     // lib.optionalAttrs (flatbuffersRustPackage != null) {
       flatbuffers-rust-bindings = flatbuffersRust;
     };

@@ -91,6 +91,15 @@
                   purifier = self.lib.purifier;
                 })
                   args;
+              npmProjector =
+                args:
+                let
+                  npmPkgs = import inputs.npm-projector.inputs.nixpkgs {
+                    inherit system;
+                    overlays = [ inputs.npm-projector.overlays.default ];
+                  };
+                in
+                npmPkgs.npm-purifier.buildNpmProject args;
               cargoProjector =
                 args:
                 pkgs.callPackage (inputs.cargo-projector + "/nix/lib/cargo-projections.nix") (

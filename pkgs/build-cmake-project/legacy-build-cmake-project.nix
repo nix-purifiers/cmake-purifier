@@ -34,6 +34,7 @@ assert lib.assertMsg
     && (args.flatbuffersJavaPackage or null) == null
     && (args.flatbuffersJavaRuntimeBuilder or null) == null
     && (args.capnprotoPackage or null) == null
+    && (args.thriftDocumentation or null) == null
     && (args.thriftPackage or null) == null
     && (args.thriftJavaPackage or null) == null
     && (args.thriftJavaRuntimeLock or null) == null
@@ -45,6 +46,11 @@ assert lib.assertMsg
     && (args.flatbuffersGoPackage or null) == null
     && (args.flatbuffersGoProjector or null) == null
     && (args.flatbuffersGoRuntimeModulePath or null) == null
+    && (args.thriftJavaScriptPackage or null) == null
+    && (args.thriftJavaScriptRuntimeBuilder or null) == null
+    && (args.thriftJavaScriptBrowserBuilder or null) == null
+    && (args.thriftJavaScriptWebjar or null) == null
+    && (args.thriftJavaScriptDependencies or [ ]) == [ ]
     && (args.thriftGoPackage or null) == null
     && (args.thriftGoProjector or null) == null
     && (args.thriftPythonPackage or null) == null
@@ -95,6 +101,7 @@ let
         "flatbuffersJavaPackage"
         "flatbuffersJavaRuntimeBuilder"
         "capnprotoPackage"
+        "thriftDocumentation"
         "thriftPackage"
         "thriftJavaPackage"
         "thriftJavaRuntimeLock"
@@ -106,6 +113,11 @@ let
         "flatbuffersGoPackage"
         "flatbuffersGoProjector"
         "flatbuffersGoRuntimeModulePath"
+        "thriftJavaScriptPackage"
+        "thriftJavaScriptRuntimeBuilder"
+        "thriftJavaScriptBrowserBuilder"
+        "thriftJavaScriptWebjar"
+        "thriftJavaScriptDependencies"
         "thriftGoPackage"
         "thriftGoProjector"
         "thriftPythonPackage"
