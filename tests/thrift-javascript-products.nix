@@ -200,7 +200,9 @@ pkgs.runCommand "thrift-javascript-native-consumers"
     }
   )
   ''
-    export HOME="$TMPDIR/home" npm_config_cache="$TMPDIR/npm-cache"
+    # Gradle canonicalizes its default user home under user.home, which the
+    # Darwin sandbox does not let it inspect, unless GRADLE_USER_HOME is set.
+    export HOME="$TMPDIR/home" npm_config_cache="$TMPDIR/npm-cache" GRADLE_USER_HOME="$TMPDIR/gradle-home"
     mkdir -p "$HOME"
     python ${./thrift-javascript/consume.py} "$specPath" "$out" ${./thrift-javascript}
   ''
