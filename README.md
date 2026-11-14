@@ -635,3 +635,13 @@ namespaces. Compiler-generated Ruby bytes are preserved. Native Ruby parsing
 checks class and constant ownership across active programs, and packaging
 verifies the gem's source bytes against the compiler output. The caller's
 Ruby and Thrift packages remain overridable through the package scope.
+
+Native Thrift Erlang applications can be selected with
+`thriftErlangPackage = { name = "example_types"; version = "1.0.0"; };`
+alongside captured Thrift resources. `packages.thrift-erlang-bindings` contains
+compiled OTP modules, native record headers, and an application descriptor;
+its `sdkRuntime` contains the matching selected Thrift runtime application.
+The `.projections.otp.applicationRoot` view composes the native compiled
+schema and runtime applications for `ERL_LIBS`. The native Erlang compiler supplies
+module metadata, and generated source bytes remain unchanged. The selected
+`beamPackages` and `thrift` packages remain overridable through the package scope.
