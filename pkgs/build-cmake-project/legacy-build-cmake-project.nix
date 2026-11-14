@@ -25,6 +25,29 @@ assert lib.assertMsg
     && (args.resourceRoots or { }) == { }
     && (args.resourceDependencies or [ ]) == [ ]
     && (args.resourceSchema or null) == null
+    && (args.flatbuffersPackage or null) == null
+    && (args.flatbuffersRustPackage or null) == null
+    && (args.flatbuffersRustRuntimeLock or null) == null
+    && (args.flatbuffersRustVendorBuilder or null) == null
+    && (args.flatbuffersRustProjector or null) == null
+    && (args.flatbuffersPythonPackage or null) == null
+    && (args.flatbuffersJavaPackage or null) == null
+    && (args.flatbuffersJavaRuntimeBuilder or null) == null
+    && (args.capnprotoPackage or null) == null
+    && (args.thriftPackage or null) == null
+    && (args.thriftJavaPackage or null) == null
+    && (args.thriftJavaRuntimeLock or null) == null
+    && (args.thriftJavaRuntimeWrapper or null) == null
+    && (args.thriftJavaRuntimeBuilder or null) == null
+    && (args.flatbuffersTypeScriptPackage or null) == null
+    && (args.flatbuffersTypeScriptVendorBuilder or null) == null
+    && (args.flatbuffersTypeScriptWebjar or null) == null
+    && (args.flatbuffersGoPackage or null) == null
+    && (args.flatbuffersGoProjector or null) == null
+    && (args.flatbuffersGoRuntimeModulePath or null) == null
+    && (args.thriftGoPackage or null) == null
+    && (args.thriftGoProjector or null) == null
+    && (args.thriftPythonPackage or null) == null
   )
   "cmake-purifier: legacy profile accepts locked configure definitions and installed-file outputs only";
 let
@@ -63,6 +86,29 @@ let
         "resourceRoots"
         "resourceDependencies"
         "resourceSchema"
+        "flatbuffersPackage"
+        "flatbuffersRustPackage"
+        "flatbuffersRustRuntimeLock"
+        "flatbuffersRustVendorBuilder"
+        "flatbuffersRustProjector"
+        "flatbuffersPythonPackage"
+        "flatbuffersJavaPackage"
+        "flatbuffersJavaRuntimeBuilder"
+        "capnprotoPackage"
+        "thriftPackage"
+        "thriftJavaPackage"
+        "thriftJavaRuntimeLock"
+        "thriftJavaRuntimeWrapper"
+        "thriftJavaRuntimeBuilder"
+        "flatbuffersTypeScriptPackage"
+        "flatbuffersTypeScriptVendorBuilder"
+        "flatbuffersTypeScriptWebjar"
+        "flatbuffersGoPackage"
+        "flatbuffersGoProjector"
+        "flatbuffersGoRuntimeModulePath"
+        "thriftGoPackage"
+        "thriftGoProjector"
+        "thriftPythonPackage"
         "cmakeFlags"
       ]
       // {

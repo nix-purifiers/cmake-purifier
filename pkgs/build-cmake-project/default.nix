@@ -82,6 +82,29 @@
   resourceRoots ? { },
   resourceDependencies ? [ ],
   resourceSchema ? null,
+  flatbuffersPackage ? null,
+  flatbuffersRustPackage ? null,
+  flatbuffersRustRuntimeLock ? null,
+  flatbuffersRustVendorBuilder ? null,
+  flatbuffersRustProjector ? null,
+  flatbuffersPythonPackage ? null,
+  flatbuffersJavaPackage ? null,
+  flatbuffersJavaRuntimeBuilder ? null,
+  capnprotoPackage ? null,
+  thriftPackage ? null,
+  thriftJavaPackage ? null,
+  thriftJavaRuntimeLock ? null,
+  thriftJavaRuntimeWrapper ? null,
+  thriftJavaRuntimeBuilder ? null,
+  flatbuffersTypeScriptPackage ? null,
+  flatbuffersTypeScriptVendorBuilder ? null,
+  flatbuffersTypeScriptWebjar ? null,
+  flatbuffersGoPackage ? null,
+  flatbuffersGoProjector ? null,
+  flatbuffersGoRuntimeModulePath ? null,
+  thriftGoPackage ? null,
+  thriftGoProjector ? null,
+  thriftPythonPackage ? null,
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
   preConfigure ? "",
@@ -125,6 +148,94 @@ else
       else
         lock.outputs;
 
+    flatbuffers = callPackage ../flatbuffers-products { } {
+      resources = resourceViews.resources;
+      inherit flatbuffersPackage;
+    };
+    capnproto = callPackage ../capnproto-products { } {
+      resources = resourceViews.resources;
+      inherit capnprotoPackage;
+    };
+    thrift = callPackage ../thrift-products { } {
+      resources = resourceViews.resources;
+      inherit thriftPackage;
+    };
+    thriftJava = callPackage ../thrift-java-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit
+        thriftJavaPackage
+        thriftJavaRuntimeLock
+        thriftJavaRuntimeWrapper
+        thriftJavaRuntimeBuilder
+        ;
+    };
+    thriftPython = callPackage ../thrift-python-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftPythonPackage;
+    };
+    flatbuffersPython = callPackage ../flatbuffers-python-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit flatbuffersPythonPackage;
+    };
+    flatbuffersJava = callPackage ../flatbuffers-java-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit flatbuffersJavaPackage flatbuffersJavaRuntimeBuilder;
+    };
+    flatbuffersTypeScript = callPackage ../flatbuffers-typescript-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit flatbuffersTypeScriptPackage flatbuffersTypeScriptVendorBuilder flatbuffersTypeScriptWebjar;
+    };
+    flatbuffersGo = callPackage ../flatbuffers-go-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit flatbuffersGoPackage flatbuffersGoProjector flatbuffersGoRuntimeModulePath;
+    };
+    thriftGo = callPackage ../thrift-go-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftGoPackage thriftGoProjector;
+    };
+    flatbuffersRust = callPackage ../flatbuffers-rust-products { } {
+      resources = resourceViews.resources;
+      inherit
+        flatbuffersRustPackage
+        flatbuffersRustRuntimeLock
+        flatbuffersRustVendorBuilder
+        flatbuffersRustProjector
+        ;
+    };
+    resourceViews = lib.optionalAttrs (resourceRoots != { }) (
+      purifier.resourceProjections {
+        producer = package;
+        roots = resourceRoots;
+        dependencies = resourceDependencies;
+        schema = resourceSchema;
+        inherit runCommand python3;
+      }
+    );
+
+    schemaJvm =
+      lib.optionalAttrs
+        (
+          flatbuffersJavaPackage != null
+          || thriftJavaPackage != null
+          || (flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null)
+        )
+        (
+          purifier.jvmProjections {
+            producer = package;
+            repository = null;
+            dependencies =
+              lib.optional (flatbuffersJavaPackage != null) flatbuffersJava
+              ++ lib.optional (thriftJavaPackage != null) thriftJava
+              ++ lib.optional (
+                flatbuffersTypeScriptPackage != null && flatbuffersTypeScriptWebjar != null
+              ) flatbuffersTypeScript;
+            formats = [
+              "maven"
+              "ivy"
+            ];
+            inherit runCommand python3;
+          }
+        );
     projections =
       (purifier.nativeTargetProjections {
         producer = package;
@@ -133,15 +244,19 @@ else
         system = stdenv.hostPlatform.system;
         inherit runCommand python3;
       })
-      // lib.optionalAttrs (resourceRoots != { }) (
-        purifier.resourceProjections {
-          producer = package;
-          roots = resourceRoots;
-          dependencies = resourceDependencies;
-          schema = resourceSchema;
-          inherit runCommand python3;
-        }
-      );
+      // resourceViews
+      // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-cpp = flatbuffers; }
+      // lib.optionalAttrs (capnprotoPackage != null) { capnproto-cpp = capnproto; }
+      // lib.optionalAttrs (thriftPackage != null) { thrift-cpp = thrift; }
+      // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
+      // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
+      // schemaJvm
+      // lib.optionalAttrs (flatbuffersTypeScriptPackage != null) {
+        npm = flatbuffersTypeScript.projections.npm;
+      }
+      // lib.optionalAttrs (flatbuffersGoPackage != null) flatbuffersGo.projections
+      // lib.optionalAttrs (thriftGoPackage != null) thriftGo.projections
+      // lib.optionalAttrs (flatbuffersRustPackage != null) flatbuffersRust.projections;
 
     package = stdenv.mkDerivation (
       finalAttrs:
@@ -151,6 +266,29 @@ else
         "resourceRoots"
         "resourceDependencies"
         "resourceSchema"
+        "flatbuffersPackage"
+        "flatbuffersRustPackage"
+        "flatbuffersRustRuntimeLock"
+        "flatbuffersRustVendorBuilder"
+        "flatbuffersRustProjector"
+        "flatbuffersPythonPackage"
+        "flatbuffersJavaPackage"
+        "flatbuffersJavaRuntimeBuilder"
+        "capnprotoPackage"
+        "thriftPackage"
+        "thriftJavaPackage"
+        "thriftJavaRuntimeLock"
+        "thriftJavaRuntimeWrapper"
+        "thriftJavaRuntimeBuilder"
+        "flatbuffersTypeScriptPackage"
+        "flatbuffersTypeScriptVendorBuilder"
+        "flatbuffersTypeScriptWebjar"
+        "flatbuffersGoPackage"
+        "flatbuffersGoProjector"
+        "flatbuffersGoRuntimeModulePath"
+        "thriftGoPackage"
+        "thriftGoProjector"
+        "thriftPythonPackage"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
         # Replay listens only on loopback. Keep external outbound networking denied
@@ -228,8 +366,73 @@ else
       }
     );
   in
+  assert
+    flatbuffersPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-bindings")
+    || throw "cmake-purifier: flatbuffersPackage requires resourceRoots and a project name other than flatbuffers-bindings";
+  assert
+    capnprotoPackage == null
+    || (resourceRoots != { } && pname != "capnproto-bindings")
+    || throw "cmake-purifier: capnprotoPackage requires resourceRoots and a project name other than capnproto-bindings";
+  assert
+    thriftPackage == null
+    || (resourceRoots != { } && pname != "thrift-bindings")
+    || throw "cmake-purifier: thriftPackage requires resourceRoots and a project name other than thrift-bindings";
+  assert
+    thriftJavaPackage == null
+    || (resourceRoots != { } && pname != "thrift-java-bindings")
+    || throw "cmake-purifier: thriftJavaPackage requires resourceRoots and a distinct project name";
+  assert
+    thriftPythonPackage == null
+    || (resourceRoots != { } && pname != "thrift-python-bindings")
+    || throw "cmake-purifier: thriftPythonPackage requires resourceRoots and a project name other than thrift-python-bindings";
+  assert
+    flatbuffersPythonPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-python-bindings" && thriftPythonPackage == null)
+    || throw "cmake-purifier: flatbuffersPythonPackage requires resourceRoots, a distinct project name, and its own Python projection";
+  assert
+    flatbuffersJavaPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-java-bindings")
+    || throw "cmake-purifier: flatbuffersJavaPackage requires resourceRoots and a distinct project name";
+  assert
+    flatbuffersTypeScriptPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-typescript-bindings")
+    || throw "cmake-purifier: FlatBuffers TypeScript requires resourceRoots and a distinct project name";
+  assert
+    flatbuffersGoPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-go-bindings" && thriftGoPackage == null)
+    || throw "cmake-purifier: flatbuffersGoPackage requires resourceRoots, a distinct name and its own Go projection";
+  assert
+    thriftGoPackage == null
+    || (resourceRoots != { } && pname != "thrift-go-bindings")
+    || throw "cmake-purifier: thriftGoPackage requires resourceRoots and a distinct project name";
+  assert
+    flatbuffersRustPackage == null
+    || (resourceRoots != { } && pname != "flatbuffers-rust-bindings")
+    || throw "cmake-purifier: flatbuffersRustPackage requires resourceRoots and a distinct project name";
   {
-    packages.${pname} = package;
+    packages = {
+      ${pname} = package;
+    }
+    // lib.optionalAttrs (flatbuffersPackage != null) { flatbuffers-bindings = flatbuffers; }
+    // lib.optionalAttrs (capnprotoPackage != null) { capnproto-bindings = capnproto; }
+    // lib.optionalAttrs (thriftPackage != null) { thrift-bindings = thrift; }
+    // lib.optionalAttrs (thriftJavaPackage != null) { thrift-java-bindings = thriftJava; }
+    // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
+    // lib.optionalAttrs (flatbuffersPythonPackage != null) {
+      flatbuffers-python-bindings = flatbuffersPython;
+    }
+    // lib.optionalAttrs (flatbuffersJavaPackage != null) {
+      flatbuffers-java-bindings = flatbuffersJava;
+    }
+    // lib.optionalAttrs (flatbuffersTypeScriptPackage != null) {
+      flatbuffers-typescript-bindings = flatbuffersTypeScript;
+    }
+    // lib.optionalAttrs (flatbuffersGoPackage != null) { flatbuffers-go-bindings = flatbuffersGo; }
+    // lib.optionalAttrs (thriftGoPackage != null) { thrift-go-bindings = thriftGo; }
+    // lib.optionalAttrs (flatbuffersRustPackage != null) {
+      flatbuffers-rust-bindings = flatbuffersRust;
+    };
     inherit projections;
 
     tests = package.overrideAttrs {

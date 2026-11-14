@@ -1,0 +1,5 @@
+include "common/value.fbs";
+namespace proof;
+table Envelope { value:Value; }
+root_type Envelope;
+file_identifier "PRF1";

@@ -1,0 +1,2 @@
+namespace proof;
+table Value { answer:int; }

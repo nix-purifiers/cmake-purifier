@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "project": {
+    "name": "capnproto_schema",
+    "version": "1.0.0"
+  },
+  "definitionHash": "0d29cc64f8b084ca19f7d924282e8d3f46d9ec331bfa465160438ed4b0db03c2",
+  "cmakeFlags": [],
+  "artifacts": [],
+  "dependencies": [],
+  "gitCheckouts": [],
+  "hgCheckouts": [],
+  "svnCheckouts": [],
+  "cvsCheckouts": [],
+  "outputs": {
+    "files": [
+      "share/schemas/common/value.capnp",
+      "share/schemas/main.capnp"
+    ],
+    "targets": {}
+  },
+  "contentHash": "sha256:135bfbcb5a4b52a13426c7b8d9d955a98dc4d9021279b138d601ebf1dd38ae4e"
+}

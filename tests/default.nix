@@ -9,6 +9,9 @@
 # workflow (.github/workflows/check.yml) instead.
 {
   pkgs,
+  goProjector,
+  cargoProjector,
+  gradleProjector,
   # The shared library's functions.
   purifier,
   # buildCMakeProject of the flake's package overlay, and
@@ -142,6 +145,54 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  thrift-python-products = import ./thrift-python-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  thrift-java-products = import ./thrift-java-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = gradleProjector;
+  };
+  thrift-go-products = import ./thrift-go-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = goProjector;
+  };
+  thrift-products = import ./thrift-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  capnproto-products = import ./capnproto-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  flatbuffers-java-products = import ./flatbuffers-java-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  flatbuffers-python-products = import ./flatbuffers-python-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  flatbuffers-typescript-products = import ./flatbuffers-typescript-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  flatbuffers-go-products = import ./flatbuffers-go-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = goProjector;
+  };
+  flatbuffers-rust-products = import ./flatbuffers-rust-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = cargoProjector;
+  };
+  flatbuffers-products = import ./flatbuffers-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   resource-schema = import ./resource-schema.nix {
     inherit pkgs;
     build = buildCMakeProject;

@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+project(capnp_native_inspector LANGUAGES CXX)
+find_package(CapnProto CONFIG REQUIRED PATHS "${CAPNP_SDK}/lib/cmake/CapnProto" NO_DEFAULT_PATH)
+add_executable(inspect inspect.cpp)
+target_link_libraries(inspect PRIVATE CapnProto::capnp-json)
+install(TARGETS inspect RUNTIME DESTINATION bin)
