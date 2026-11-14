@@ -53,6 +53,10 @@ assert lib.assertMsg
     && (args.thriftJavaScriptBrowserBuilder or null) == null
     && (args.thriftJavaScriptWebjar or null) == null
     && (args.thriftJavaScriptDependencies or [ ]) == [ ]
+    && (args.thriftRustPackage or null) == null
+    && (args.thriftRustRuntimeLock or null) == null
+    && (args.thriftRustVendorBuilder or null) == null
+    && (args.thriftRustProjector or null) == null
     && (args.thriftGoPackage or null) == null
     && (args.thriftGoProjector or null) == null
     && (args.thriftPythonPackage or null) == null
@@ -122,6 +126,10 @@ let
         "thriftJavaScriptBrowserBuilder"
         "thriftJavaScriptWebjar"
         "thriftJavaScriptDependencies"
+        "thriftRustPackage"
+        "thriftRustRuntimeLock"
+        "thriftRustVendorBuilder"
+        "thriftRustProjector"
         "thriftGoPackage"
         "thriftGoProjector"
         "thriftPythonPackage"

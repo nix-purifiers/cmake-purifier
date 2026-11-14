@@ -6,7 +6,7 @@
   # exported pkgSet.
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.cargo-projector = {
-    url = "git+https://github.com/nix-purifiers/cargo-purifier?ref=refs/tags/v0.1.7";
+    url = "git+https://github.com/nix-purifiers/cargo-purifier?ref=refs/tags/v0.1.9";
     flake = false;
   };
   inputs.npm-projector.url = "git+https://github.com/nix-purifiers/npm-purifier?ref=refs/tags/v0.1.13";

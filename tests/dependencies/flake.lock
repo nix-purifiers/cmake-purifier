@@ -178,16 +178,16 @@
     "cargo-projector": {
       "flake": false,
       "locked": {
-        "lastModified": 1793983385,
-        "narHash": "sha256-nPhMqeROwYBVBGmJTDi75dg2bjnwtXMzC+2SMwDOH6I=",
-        "ref": "refs/tags/v0.1.7",
-        "rev": "2146ec401ed2f22e2068f005b76b9823b2aff1a4",
-        "revCount": 54,
+        "lastModified": 1794548383,
+        "narHash": "sha256-Zbui2HLsLTDc0maHaLsrndjL5JIbh8G8r3hpyoU1QaM=",
+        "ref": "refs/tags/v0.1.9",
+        "rev": "918af7f0618c2068e06e4e581ebc209048020ba6",
+        "revCount": 61,
         "type": "git",
         "url": "https://github.com/nix-purifiers/cargo-purifier"
       },
       "original": {
-        "ref": "refs/tags/v0.1.7",
+        "ref": "refs/tags/v0.1.9",
         "type": "git",
         "url": "https://github.com/nix-purifiers/cargo-purifier"
       }
