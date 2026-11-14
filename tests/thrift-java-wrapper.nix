@@ -13,6 +13,9 @@ pkgs.runCommand "thrift-java-native-gradle-wrapper"
     // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
       # Gradle uses a local socket for native file-lock contention handling.
       __darwinAllowLocalNetworking = true;
+      # Java's dual-stack sockets keep Gradle from connecting to its daemon
+      # inside the Darwin sandbox.
+      env.JAVA_TOOL_OPTIONS = "-Djava.net.preferIPv4Stack=true";
     }
   )
   ''

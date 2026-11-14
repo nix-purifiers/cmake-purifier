@@ -116,6 +116,9 @@ pkgs.runCommand "flatbuffers-java-native-consumers"
     }
     // pkgs.lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
       __darwinAllowLocalNetworking = true;
+      # Java's dual-stack sockets keep Gradle from connecting to its daemon
+      # inside the Darwin sandbox.
+      env.JAVA_TOOL_OPTIONS = "-Djava.net.preferIPv4Stack=true";
     }
   )
   ''
