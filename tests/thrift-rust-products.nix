@@ -108,7 +108,9 @@ pkgs.runCommand "thrift-rust-native-consumers"
       pkgs.stdenv.cc
       pkgs.pkg-config
     ];
-    buildInputs = [ pkgs.thrift ];
+    # The libc crate in the Thrift runtime's dependency graph links iconv on
+    # Darwin.
+    buildInputs = [ pkgs.thrift ] ++ pkgs.lib.optional pkgs.stdenv.hostPlatform.isDarwin pkgs.libiconv;
     spec = builtins.toJSON {
       versions = [
         (make source1)
