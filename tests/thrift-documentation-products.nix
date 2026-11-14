@@ -86,7 +86,9 @@ pkgs.runCommand "thrift-native-documentation-consumers"
     }
   )
   ''
-    export HOME="$TMPDIR/home"
+    # Gradle canonicalizes its default user home under user.home, which the
+    # Darwin sandbox does not let it inspect, unless GRADLE_USER_HOME is set.
+    export HOME="$TMPDIR/home" GRADLE_USER_HOME="$TMPDIR/gradle-home"
     mkdir -p "$HOME"
     python ${./thrift-documentation/consume.py} "$specPath" "$out"
   ''
