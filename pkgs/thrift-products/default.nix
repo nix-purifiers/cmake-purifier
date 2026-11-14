@@ -44,7 +44,9 @@ let
     configurePhase = ''
       runHook preConfigure
       python ${./generate.py} "$specPath" source
-      cmake -S source -B build -G Ninja -DCMAKE_INSTALL_PREFIX="$out" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      # Darwin consumers that link through pkg-config load the library by its
+      # install name, so it names the installed path.
+      cmake -S source -B build -G Ninja -DCMAKE_INSTALL_PREFIX="$out" -DCMAKE_INSTALL_NAME_DIR="$out/lib" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       runHook postConfigure
     '';
     buildPhase = ''

@@ -56,13 +56,18 @@ let
   # The SDK's own build refers to ../../LICENSE, NOTICE and test schemas.
   # Keep that native layout rather than flattening lib/java into a new root.
   runtime = project.packages.${model.rootProjectName}.overrideAttrs (
-    _:
+    old:
     {
       sourceRoot = "${prepared.name}/lib/java";
       nativeIvyConverter = ../maven-ivy-products;
     }
     // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
       __darwinAllowLocalNetworking = true;
+      # Java's dual-stack sockets keep Gradle from connecting to its daemon
+      # inside the Darwin sandbox.
+      env = (old.env or { }) // {
+        JAVA_TOOL_OPTIONS = "-Djava.net.preferIPv4Stack=true";
+      };
     }
   );
   runtimeViews = purifier.jvmProjections {
@@ -105,6 +110,9 @@ let
         }
         // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
           __darwinAllowLocalNetworking = true;
+          # Java's dual-stack sockets keep Gradle from connecting to its
+          # daemon inside the Darwin sandbox.
+          env.JAVA_TOOL_OPTIONS = "-Djava.net.preferIPv4Stack=true";
         }
       )
       ''
