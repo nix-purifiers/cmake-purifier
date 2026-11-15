@@ -471,3 +471,181 @@ The consumer SDK recipe and repeatable original-source fixture are in
 `tests/legacy-external`. They cover nested downloads, deterministic and
 relocated relock, source preservation, native SDK origins at three levels,
 installed consumers, cold replay, pure builds and failure controls.
+
+### Generated FlatBuffers C++ packages
+
+An installed FlatBuffers include tree can also produce a ready C++ package:
+
+```nix
+resourceRoots."." = "share/schemas";
+resourceSchema = { format = "flatbuffers"; entrypoints = [ "main.fbs" ]; };
+flatbuffersPackage = { name = "my_schemas"; version = "1.0.0"; };
+```
+
+The result exposes `packages.flatbuffers-bindings` and
+`projections.flatbuffers-cpp`. CMake consumers use
+`find_package(my_schemas 1.0 CONFIG REQUIRED)` and link `my_schemas::bindings`;
+pkg-config consumers use `my_schemas`. Native `flatc` discovers the transitive
+schema dependencies and generates headers with their include paths preserved.
+The package propagates the same FlatBuffers SDK used for generation. Its
+`flatbuffers-products.json` records compiler commands, native dependency rules,
+and schema/header hashes. Resource dependencies join the selected schema tree
+before generation. The original installed package keeps the same derivation
+with or without `flatbuffersPackage`. The legacy profile rejects this option.
+
+### Generated Cap’n Proto C++ packages
+
+Select an installed schema tree and opt into its generated C++ package:
+
+```nix
+resourceRoots."." = "share/schemas";
+resourceSchema = { format = "capnproto"; entrypoints = [ "main.capnp" ]; };
+capnprotoPackage = { name = "my_capnp"; version = "1.0.0"; };
+```
+
+Use `packages.capnproto-bindings` or `projections.capnproto-cpp` as a build
+input. CMake consumers find `my_capnp` and link `my_capnp::bindings`;
+pkg-config consumers use `my_capnp`. Both carry the selected native SDK’s
+requirements. The package contains generated headers, a shared C++ library,
+and generated sources and provenance under `share/my_capnp`.
+
+The native compiler’s `CodeGeneratorRequest` supplies the transitive file IDs,
+imports, and SDK version. Captured imported schemas become part of the package;
+SDK schemas reuse the SDK implementation, with different shadow copies
+rejected. Schema, generated-source, SDK-schema, and installed-library hashes
+are retained. The original installed package keeps its derivation identity
+with or without the opt-in. The legacy profile rejects this option.
+
+### Thrift C++ schema packages
+
+Select `resourceRoots` and `resourceSchema = { format = "thrift"; entrypoints = [ "main.thrift" ]; };`, then set `thriftPackage = { name = "schema_package"; version = "1.0.0"; };` to expose `packages.thrift-bindings` and `projections.thrift-cpp`.
+
+The native Thrift compiler generates C++ types and RPC client/processor classes from the captured include tree. Its verbose scan, parse and generation records must agree and identify captured inputs. Inputs outside that tree and duplicate program basenames are rejected. Generated code is packaged as a shared library with CMake and pkg-config metadata, tied to the selected Thrift SDK. CMake probes the generated implementation against that SDK to select and propagate a working C++ standard. Source hashes, native models, compiler input records, generated source and installed library hashes accompany the package.
+
+This projection packages the captured schema closure together. It does not acquire schema dependencies or infer separate package ownership from Thrift includes.
+
+### Thrift C/GLib libraries and foreign calls
+
+Set `thriftCGLibPackage = { name = "example_schemas"; version = "1.0.0"; };` with selected Thrift resources. `packages.thrift-c-glib-bindings` and `projections.thrift-c-glib` provide a shared C library, unchanged native generated headers and sources, CMake targets, pkg-config metadata and source/runtime provenance. Native program basenames and generated filenames must be unambiguous. Compiler input traces and native JSON models establish the included schema graph.
+
+The default runtime builds C/GLib from the selected Thrift SDK source. It configures the SDK's original pkg-config template, which upstream CMake omits, and retains its license and notice. An explicit `thriftCGLibRuntimeBuilder` callback receives that source and SDK version and can supply a native runtime producer. Its `thrift_c_glib.pc` prefix/version, installed headers and native configuration version must match the selected SDK. The callback owns runtime construction; it does not replace the selected compiler.
+
+Python ctypes/CFFI and Java FFM can load the shared library directly and use the generated `get_type` functions with public GObject constructors/properties and Thrift transport/protocol APIs. Follow native GObject reference ownership and process-wide type naming. The consumer examples under `tests/thrift-c-glib` exercise those APIs without private struct offsets, including exact C++ wire compatibility across two field-ID revisions and qualified types. Native C and CMake/pkg-config consumers also exercise generated clients/processors and inherited RPC methods.
+
+For compiler outputs whose service-specific `dispatch_call` is not installed in `ThriftDispatchProcessor`'s inherited virtual slot, the package supplies `purifier_thrift_c_glib_processor.h`. Include the actual native service header and define a GObject subclass with the generated names:
+
+```c
+#include <answer_service.h>
+#include <purifier_thrift_c_glib_processor.h>
+PURIFIER_THRIFT_DEFINE_PROCESSOR(ReadyProcessor, ready_processor,
+                               AnswerServiceProcessor,
+                               answer_service_processor_get_type)
+/* Instantiate ready_processor_get_type() with the native "handler" property. */
+```
+
+The helper forwards to the original generated dispatch callback through public class declarations. It changes no generated bytes or wire handling. The selected 0.24.0 SDK is tested; other generated class layouts require their own compatibility proof. Tests retain the unadapted root processor's actual invalid-method response, then exercise adapted root and inherited services successfully. The artifact is a native library; it does not invent Python or Java schema packages.
+
+### Thrift Python schema packages
+
+With selected Thrift `resourceRoots` and `resourceSchema`, set `thriftPythonPackage = { name = "example-schemas"; version = "1.0.0"; };`. `packages.thrift-python-bindings.projections.python` and the project's `projections.python` expose an ordinary Python wheelhouse.
+
+The native compiler supplies the schema graph, Python packages and RPC classes. Each program is generated separately so conflicting output modules are rejected before a recursive generator can overwrite them. Native scan and parse records must identify captured files; outside inputs, changed hashes and a generated package shadowing `thrift` are rejected. Namespaces follow the selected IDL.
+
+The runtime is built by the selected compiler release's own Python PEP 517 backend, including its native optional-extension policy. Native wheel metadata must match the actual compiler version. The existing Python projector gives the runtime an immutable identity and pins generated-wheel requirements to it. The adapter retains captured schema, native graph, generated source, runtime source and native extension hashes. It does not substitute a separately versioned Python runtime or infer independent schema-package ownership from includes.
+
+### FlatBuffers Python schema packages
+
+With selected FlatBuffers `resourceRoots` and `resourceSchema`, set `flatbuffersPythonPackage = { name = "example-schemas"; version = "1.0.0"; };`. `packages.flatbuffers-python-bindings.projections.python` and the project's `projections.python` expose a wheelhouse for ordinary Python installers.
+
+Native binary-schema reflection records the complete schema graph with absolute input paths. The selected SDK's own reflection schema decodes that metadata; captured file hashes and include membership are checked before native Python generation. Each schema uses the normal native package generator, preserving imports and qualified names such as `a.Value` and `b.Value`. Conflicting output files and packages shadowing the runtime are rejected. Generated Python source is retained byte-for-byte in the wheel.
+
+The runtime wheel comes from the selected FlatBuffers compiler release's own Python backend. Native wheel metadata must match the actual compiler version. The existing Python projector retains and pins this runtime through a typed provider. The adapter keeps the native reflection data, generated and runtime source hashes, and raw wheel hashes. NumPy remains the native runtime's optional consumer dependency. One schema resource selection exposes one Python distribution; independent schema-package ownership is not inferred from includes.
+
+### FlatBuffers Java schema packages
+
+Select FlatBuffers resources and set `flatbuffersJavaPackage = { groupId = "org.example.schemas"; artifactId = "answer"; version = "1.0.0"; };`. Also supply `flatbuffersJavaRuntimeBuilder = args: pkgs.maven.buildMavenPackage (args // { mvnHash = /* captured native SDK build dependencies */; });`.
+
+The callback builds the selected compiler release's own Java runtime with its native Maven bundle backend. The adapter supplies that SDK source and configures the backend's reproducible-build instructions; it retains both the original SDK POM and the configured native publication. It preserves the native JAR and sources JAR bytes. The native runtime POM version must match the actual `flatc` version. There is no SDK version table or replacement dependency resolver.
+
+The native binary-schema reflection graph binds code generation to captured input files. Normal per-schema Java generation retains namespaces and rejects conflicting outputs or SDK type shadows. Native `javac` targets the selected runtime's base class-file level, and native Maven model APIs write the declared library publication. `packages.flatbuffers-java-bindings.projections.maven` and the project's `projections.maven` expose the resulting repository, with the SDK runtime supplied as a typed dependency and pinned to its immutable identity. The original CMake producer is unchanged by selection of this projection.
+
+### Thrift JavaScript and TypeScript schema packages
+
+Select Thrift resources and set `thriftJavaScriptPackage = { name = "@example/schemas"; version = "1.0.0"; entrypoints = { schema = "main_types"; service = "AnswerService"; }; };`. Each entrypoint names an actual generated JavaScript module, without its extension. `packages.thrift-javascript-bindings.projections.npm` and the project's `projections.npm` expose the package and its matched SDK runtime as a native npm repository. The package supplies CommonJS and ESM entrypoints and the compiler's native declaration files. Select one schema npm product per project-level npm view.
+
+Supply `thriftJavaScriptRuntimeBuilder` as a callback to the released npm purifier's `buildNpmProject`, using its overlay scope so implementation and SDK configuration remain intact. It receives the selected Thrift SDK source and builds the full SDK root manifest and native package lock, with no additional build or upstream test scripts. An evaluation-ready copy of that exact source tree can be supplied by the callback using its declared source URL and NAR hash. Native compiler version, original runtime manifest and captured runtime publication must agree. Native npm installs the supplied archive closure and the shared native capturer records the complete dependency graph. The adapter does not resolve imports to package names or versions.
+
+`thriftJavaScriptDependencies` accepts additional native npm producers. For example, an explicitly captured `@types/thrift` package supplies the selected SDK's missing Node runtime declarations for strict TypeScript consumers. Without such a declaration provider, the generated schema declarations retain the SDK's ordinary TypeScript behavior; strict mode reports its actual missing-declaration diagnostic. No replacement SDK declarations are invented. The consumer checks exercise strict compilation with a real provider and reject incorrect field types.
+
+Every generated `.js` and `.d.ts` byte remains unchanged. Only package entrypoint wiring is adapter owned. Native JSON and verbose compiler output bind source ownership and includes; hashes and containment are checked, and ambiguous program basenames and colliding service output files fail. Tests use ordinary offline npm consumers, both module systems, native TypeScript, C++ binary wire compatibility and real generated RPC through the SDK's Unix-socket client and server. Browser output is optional, as described below.
+
+Set `thriftJavaScriptBrowserBuilder` to the released npm constructor callback to additionally capture the selected SDK’s `lib/js` manifest and lock. Native esbuild bundles the generated modules with the SDK’s declared browser runtime and its native Browserify polyfills. The npm `./browser` export supplies the ES module bundle and declaration entrypoint. Bundle metadata retains every actual input and its hash. Browser runtime declarations expose the transport and protocol constructors covered by the supplied native type provider; browser-specific connection methods remain JavaScript APIs until a matching declaration provider is supplied. Strict TypeScript with browser bundler resolution is supported; the unchanged upstream declarations produce TS1479 under NodeNext because they import the ESM `uuid` package from CommonJS declaration files.
+
+The browser product exposes `projections.web.documentRoot` for HTTP serving and `projections.java-resources.classPath` for classloader resources. Set `thriftJavaScriptWebjar = { artifactId = "example-schemas"; version = "1.0.0"; };` to publish the bundle as a WebJar in the project’s Maven and Ivy repositories. This requires the browser builder. Consumer checks serve the bundle over HTTP to Chromium, compare native C++ wire bytes, and load the same bytes through Java classloaders and offline Gradle Maven/Ivy resolution.
+
+### Thrift documentation packages
+
+Set `thriftDocumentation = { formats = [ "html" "markdown" "gv" "mmd" ]; };` alongside selected Thrift resource roots and schema entrypoints. The default formats are HTML and Markdown. `packages.thrift-documentation` retains native documentation, JSON models, compiler input records and hashes. Its `projections.web.documentRoot` and `projections.java-resources.classPath` expose the complete assets. Paths retain the format and entrypoint program name, for example `html/main/index.html`, with included modules and the native stylesheet beside it. Separate entrypoints keep their native indexes in separate directories.
+
+An optional `thriftDocumentation.webjar = { artifactId = "schema-docs"; version = "1.0.0"; };` publishes the assets through Maven and Ivy, including the project's combined JVM views. The project's `projections.thrift-documentation` names this product explicitly so documentation does not replace another product's web root. Native Graphviz and Mermaid outputs remain source diagrams; they are not pre-rendered HTML. These packages document the captured schema closure and do not acquire external schema packages.
+
+### Thrift Go schema modules
+
+With selected Thrift schema resources, set `thriftGoPackage.modulePath = "example.org/schemas";` and supply a native Go purifier CLI as `thriftGoProjector`. `packages.thrift-go-bindings.projections.go` and the project's `projections.go` expose a native Go module proxy. The selected IDL's Go namespaces determine importable package names; no generated import statements are rewritten.
+
+The existing Go projector first packages the exact compiler SDK's root Go module. The adapter reads that native catalog identity and the SDK's native `go.mod`, then uses native Go manifest edits to bind generated modules to that runtime. No SDK release tag is invented for an otherwise unversioned source module. The native Thrift graph and compiler scan/parse paths must identify captured inputs; programs are generated separately and conflicting output bytes or ambiguous source names are rejected. Ordinary Go compilation validates the resulting namespaces and types. Schema dependencies in the selected resource closure are packaged together, with no separate schema-module ownership inference.
+
+### Thrift Rust schema crates
+
+Select Thrift resources and set `thriftRustPackage = { name = "example_schemas"; };`. Supply `thriftRustRuntimeLock` with a native Cargo lock captured from the selected SDK's `lib/rs` directory, `thriftRustVendorBuilder` with a captured `pkgs.rustPlatform.fetchCargoVendor` callback, and `thriftRustProjector` with the Cargo purifier's native projection constructor. `packages.thrift-rust-bindings.projections.cargo` and the project's `projections.cargo` expose the generated crate and matched SDK runtime in a local registry for ordinary offline Cargo consumers. Select one schema Rust product per project-level Cargo view.
+
+Native Thrift JSON and verbose compiler output establish the captured program/include graph; every captured source hash is checked. Each native program is generated separately, preserving every generated Rust source byte. The adapter supplies only the crate root's module declarations, using the compiler's program names. Ambiguous program basenames and output collisions fail. Native Cargo creates the crate manifest and dependency lock using the runtime's actual manifest and projected coordinate. One captured resource closure produces one crate; includes do not imply independently acquired schema crates.
+
+The selected Thrift 0.24 compiler warns that its Rust target is deprecated because it lacks active maintainers. Raw native compiler logs retain this warning. This product binds the explicitly selected compiler and matching runtime; it makes no future SDK or minimum Rust version guarantee. Native generated types and RPC are tested through an ordinary Cargo consumer, including C++ wire compatibility and source/archive origin checks.
+
+### FlatBuffers Rust schema crates
+
+Select FlatBuffers resources and set `flatbuffersRustPackage = { name = "example_schemas"; };`. Supply `flatbuffersRustRuntimeLock` with a Cargo lock generated from the selected SDK's `rust/flatbuffers` directory, `flatbuffersRustVendorBuilder = args: pkgs.rustPlatform.fetchCargoVendor (args // { hash = /* captured native vendor hash */; });`, and `flatbuffersRustProjector` with the Cargo purifier's native projection constructor. `packages.flatbuffers-rust-bindings.projections.cargo` and the project's `projections.cargo` expose a local registry for ordinary offline Cargo consumers.
+
+The runtime comes from the selected compiler's own SDK source. Native Cargo generates manifests, resolves the captured runtime lock and packages both crates; published dependency versions come from the Cargo projector's catalog. Native BFBS reflection verifies the complete captured schema input graph and hashes. The SDK's type-per-file Rust mode generates each selected root independently. Native type files remain unchanged; the adapter supplies namespace module wiring from their paths and retains the original native root modules in its receipt. Identical shared outputs merge; conflicting native outputs fail. This supports multiple independent roots and qualified types with the same short name. One captured resource closure produces one crate; separate external schema crate ownership is not inferred from includes.
+
+### FlatBuffers Go schema modules
+
+Select FlatBuffers resources and set `flatbuffersGoPackage = { modulePath = "example.org/schemas"; };`, `flatbuffersGoRuntimeModulePath = "github.com/google/flatbuffers/go";`, and `flatbuffersGoProjector` to the released Go purifier CLI. `packages.flatbuffers-go-bindings.projections.go` and the project's `projections.go` expose a standard offline module proxy.
+
+The selected SDK supplies the runtime's exact Go sources. Since this SDK source has no Go module manifest, its module identity is explicit: native `go mod init` creates a manifest using the selected Go toolchain. The existing Go projector publishes this source module, and its actual catalog coordinate is required by the generated module. This coordinate is not presented as an upstream tagged release or a minimum Go compatibility claim. Native flatc uses its supported runtime-import and module-prefix options; generated source bytes are preserved. Native BFBS reflection records and verifies the captured include graph. Each selected schema root generates separately; identical shared files merge and conflicting outputs fail. One captured resource closure produces one Go module; separate schema module ownership and gRPC service dependencies are not inferred.
+
+### FlatBuffers TypeScript, JavaScript and browser packages
+
+Select FlatBuffers resources and set `flatbuffersTypeScriptPackage = { name = "example-schemas"; version = "1.0.0"; entrypoints = { "." = "main.fbs"; "./extra" = "other.fbs"; }; };`. The entrypoint map explicitly names each captured root's npm export. Supply `flatbuffersTypeScriptVendorBuilder = args: pkgs.fetchPnpmDeps (args // { hash = /* captured native SDK pnpm dependencies */; });`.
+
+`packages.flatbuffers-typescript-bindings.projections.npm` and the project's `projections.npm` expose a native npm package with CommonJS, ES modules, declarations and generated TypeScript. The selected SDK's own pnpm lock and build script build its JavaScript runtime and compiler tools. Native npm packages that runtime; its typed provider supplies the exact published dependency version. Native TypeScript compiles unchanged flatc outputs, retaining source/declaration hashes and the actual compiler input list. Each root's complete native tree is isolated, preserving namespace barrels even when separate roots share a namespace. One captured resource closure produces one npm distribution; external schema package ownership is not inferred.
+
+The package's `projections.web.documentRoot` serves native esbuild ES module bundles named by the retained `flatbuffers-typescript.json` entrypoint map, plus `runtime.mjs`. Native bundler input graphs and hashes identify every generated/runtime source. `projections.java-resources.classPath` contains the same browser bytes as Java resources. Set `flatbuffersTypeScriptWebjar = { artifactId = "example-schemas"; version = "1.0.0"; };` to publish Maven and Ivy WebJars. Project-level JVM views compose selected Java schema libraries and browser WebJars through the existing typed JVM projector; the schema resource view remains separate from browser resources. These outputs are library assets; they do not deploy a website or implement an application.
+
+### Thrift Java schema and RPC packages
+
+Select Thrift resources and set `thriftJavaPackage = { groupId = "org.example.schemas"; artifactId = "answer"; version = "1.0.0"; };`. Supply `thriftJavaRuntimeLock`, the native Gradle purifier lock of the selected SDK's `lib/java` build; `thriftJavaRuntimeWrapper`, companion wrapper files generated by native Gradle; and `thriftJavaRuntimeBuilder`, the released Gradle purifier's native project constructor. The package's `projections.maven` and `projections.ivy`, and the project's combined JVM views, publish the generated types and RPC service with the SDK runtime and its native dependency graph.
+
+The adapter retains the full SDK tree and builds from `lib/java`, preserving its references to the SDK license, notice and test schemas. It adds only the native wrapper companion. The captured native Gradle project supplies the runtime's publication coordinates, POM, binaries, source archives and resolved runtime dependencies. The shared JVM projector supplies their exact immutable consumer versions. SDK acquisition can exclude upstream checks; the projection's own wire and generated RPC consumers are validated separately. The native source build and its runtime dependencies remain selected SDK inputs; this does not change impure compiler adoption.
+
+Native Thrift verbose input traces and JSON models establish the complete captured include graph. Each native program generates independently with Jakarta and undated generated annotations; original generated source bytes are preserved and conflicting Java outputs fail. Native Gradle compiles the library and publishes its POM, module metadata and source archive. Its compile target comes from the actual SDK `TBase.class`; its compile classpath includes the SDK's resolved runtime configuration, without mapping Java imports to guessed artifact names. One captured schema resource closure produces one JVM publication; separate external schema package ownership and a blanket JVM compatibility range are not inferred.
+
+For these Maven-native Java outputs, the Ivy view is produced by the selected Gradle SDK's Apache Ivy POM parser and descriptor writer. That native converter resolves parents, scopes and available source/Javadoc classifiers from the completed local Maven view, preserves its published coordinates and artifact bytes, and permits no HTTP input. It fixes only the generated descriptor's publication date to the standard 1980 epoch. This supplies a real Ivy repository; requesting an Ivy format from the shared JVM projector alone preserves existing Ivy publications and does not convert Maven descriptors.
+
+Native Thrift Ruby packages can be selected with
+`thriftRubyPackage = { name = "example-types"; version = "1.0.0"; };`
+and `thriftRubyDependencies = [ loggerProject ];`, alongside the captured
+Thrift resource roots and entrypoints. Dependency projects carry their
+`projections.rubygems` repositories; supply the runtime dependencies declared
+by the selected SDK's native gemspec. Missing dependencies fail through the
+native offline installer.
+
+`packages.thrift-ruby-bindings` is the native schema gem, and
+`projections.rubygems` is its composed repository. `sdkRuntime` exposes the
+matching native SDK gem and its repository. Generation uses the compiler's
+`rb:namespaced` layout, so Ruby `require` paths follow the declared native
+namespaces. Compiler-generated Ruby bytes are preserved. Native Ruby parsing
+checks class and constant ownership across active programs, and packaging
+verifies the gem's source bytes against the compiler output. The caller's
+Ruby and Thrift packages remain overridable through the package scope.

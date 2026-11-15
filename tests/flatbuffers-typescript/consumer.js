@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: MIT
+const fs=require('fs');const f=require('flatbuffers');const main=require('proof-schemas');const {proof,a,b}=main;const {proof:extra}=require('proof-schemas/extra');
+function check(ok){if(!ok)throw Error('native wire mismatch');}
+const bits=Number(process.argv[4]);const cpp=Buffer.from(process.argv[2],'hex');const value=proof.Envelope.getRootAsEnvelope(new f.ByteBuffer(cpp)).value();check(Number(value.answer())===42);check(typeof value.answer()===(bits===64?'bigint':'number'));
+const builder=new f.Builder(0);proof.Value.startValue(builder);proof.Value.addAnswer(builder,bits===64?42n:42);const v=proof.Value.endValue(builder);proof.Envelope.startEnvelope(builder);proof.Envelope.addValue(builder,v);const root=proof.Envelope.endEnvelope(builder);builder.finish(root,'PRF1');const wire=builder.asUint8Array();check(Number(proof.Envelope.getRootAsEnvelope(new f.ByteBuffer(wire)).value().answer())===42);
+for(const [ns,num] of [[a,7],[b,8]]){const x=new f.Builder(0);ns.Value.startValue(x);ns.Value.addAnswer(x,num);x.finish(ns.Value.endValue(x));check(ns.Value.getRootAsValue(new f.ByteBuffer(x.asUint8Array())).answer()===num);}
+const x=new f.Builder(0);extra.Packet.startPacket(x);extra.Packet.addAnswer(x,44);x.finish(extra.Packet.endPacket(x),'EXT1');check(extra.Packet.getRootAsPacket(new f.ByteBuffer(x.asUint8Array())).answer()===44);fs.writeFileSync(process.argv[3],wire);
+console.log(JSON.stringify({answer:42,bits,wire:Buffer.from(wire).toString('hex'),qualified:[7,8],other:44,owned:require.resolve('proof-schemas'),runtime:require.resolve('flatbuffers')}));

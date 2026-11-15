@@ -9,6 +9,10 @@
 # workflow (.github/workflows/check.yml) instead.
 {
   pkgs,
+  goProjector,
+  cargoProjector,
+  npmProjector,
+  gradleProjector,
   # The shared library's functions.
   purifier,
   # buildCMakeProject of the flake's package overlay, and
@@ -142,6 +146,77 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  thrift-ruby-products = import ./thrift-ruby-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    dependencies = [ (import ./thrift-ruby/dependency.nix { inherit pkgs purifier; }) ];
+  };
+  thrift-python-products = import ./thrift-python-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  thrift-java-products = import ./thrift-java-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = gradleProjector;
+  };
+  thrift-javascript-products = import ./thrift-javascript-products.nix {
+    inherit pkgs purifier;
+    build = buildCMakeProject;
+    npmBuilder = npmProjector;
+  };
+  thrift-go-products = import ./thrift-go-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = goProjector;
+  };
+  thrift-documentation-products = import ./thrift-documentation-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  thrift-c-glib-products = import ./thrift-c-glib-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  thrift-products = import ./thrift-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  capnproto-products = import ./capnproto-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  flatbuffers-java-products = import ./flatbuffers-java-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  flatbuffers-python-products = import ./flatbuffers-python-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  flatbuffers-typescript-products = import ./flatbuffers-typescript-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
+  flatbuffers-go-products = import ./flatbuffers-go-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = goProjector;
+  };
+  thrift-rust-products = import ./thrift-rust-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = cargoProjector;
+  };
+  flatbuffers-rust-products = import ./flatbuffers-rust-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+    projector = cargoProjector;
+  };
+  flatbuffers-products = import ./flatbuffers-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   resource-schema = import ./resource-schema.nix {
     inherit pkgs;
     build = buildCMakeProject;

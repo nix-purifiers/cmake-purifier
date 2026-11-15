@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+project(flatbuffers_consumer LANGUAGES CXX)
+find_package(schema_proof 1.0.0 CONFIG REQUIRED)
+find_package(schema_proof 1.0.0 CONFIG REQUIRED)
+add_executable(consumer consumer.cpp)
+target_link_libraries(consumer PRIVATE schema_proof::bindings)
+target_compile_definitions(consumer PRIVATE EXPECT_BITS=${EXPECT_BITS})
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

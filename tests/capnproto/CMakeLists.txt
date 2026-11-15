@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+project(capnp_schema_consumer LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 11)
+find_package(capnp_proof 1.0 CONFIG REQUIRED)
+find_package(capnp_proof 1.0 CONFIG REQUIRED)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_executable(consumer consumer.cpp)
+target_link_libraries(consumer PRIVATE capnp_proof::bindings ${CMAKE_DL_LIBS})

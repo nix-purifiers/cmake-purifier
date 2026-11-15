@@ -1,0 +1,3 @@
+
+# Keep the native publication fixture byte-identical, including CRLF.
+tests/fixtures/thrift-javascript-types/README.md whitespace=cr-at-eol

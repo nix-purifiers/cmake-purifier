@@ -1,0 +1,24 @@
+{
+  "version": 3,
+  "project": {
+    "name": "schema_bundle",
+    "version": "1.0.0"
+  },
+  "definitionHash": "fe8fa9717a394ff14c960a108272ea6c5db94a7de3410f66969e628d60c88c1e",
+  "cmakeFlags": [],
+  "artifacts": [],
+  "dependencies": [],
+  "gitCheckouts": [],
+  "hgCheckouts": [],
+  "svnCheckouts": [],
+  "cvsCheckouts": [],
+  "outputs": {
+    "files": [
+      "share/private.txt",
+      "share/schemas/common/value.thrift",
+      "share/schemas/main.thrift"
+    ],
+    "targets": {}
+  },
+  "contentHash": "sha256:b6bc044f11dc6424d552b20cb7d94e5c0a11f500df951f4b818fbc69e7c0869d"
+}

@@ -84,6 +84,30 @@
           {
             checks = import ../../../tests {
               inherit pkgs;
+              goProjector = inputs.go-projector.packages.${system}.default;
+              gradleProjector =
+                args:
+                (pkgs.callPackage (inputs.gradle-projector + "/nix/lib/build-gradle-project.nix") {
+                  purifier = self.lib.purifier;
+                })
+                  args;
+              npmProjector =
+                args:
+                let
+                  npmPkgs = import inputs.npm-projector.inputs.nixpkgs {
+                    inherit system;
+                    overlays = [ inputs.npm-projector.overlays.default ];
+                  };
+                in
+                npmPkgs.npm-purifier.buildNpmProject args;
+              cargoProjector =
+                args:
+                pkgs.callPackage (inputs.cargo-projector + "/pkgs/build-cargo-project/cargo-projections.nix") (
+                  args
+                  // {
+                    purifier = self.lib.purifier;
+                  }
+                );
               inherit (self.lib) purifier;
               inherit ((pkgs.extend self.overlays.default).cmake-purifier) buildCMakeProject;
               inherit (self.lib.cmake-purifier) readLock;

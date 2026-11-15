@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+project(thrift_consumer LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+find_package(thrift_proof 1.0 CONFIG REQUIRED)
+find_package(thrift_proof 1.0 CONFIG REQUIRED)
+add_executable(consumer consumer.cpp)
+target_link_libraries(consumer PRIVATE thrift_proof::bindings ${CMAKE_DL_LIBS})
