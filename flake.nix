@@ -7,7 +7,7 @@
     caisson.url = "github:nix-caisson/caisson";
     # The shared library of the nix-purifiers: the download entries and
     # their fetches.
-    purifier.url = "github:nix-purifiers/purifier/v0.1.66";
+    purifier.url = "github:nix-purifiers/purifier/v0.1.67";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     # The library comes from the nixpkgs.lib mirror. The package sets
     # take nixpkgs.
