@@ -155,6 +155,13 @@ flake can lock a project it does not change. Every command takes it as
 `CMAKE_PURIFIER_LOCKFILE`, which the packaging flake's development shell
 can set to the path it passes as `lockFile`.
 
+For applications that force an install bundle inside the build directory,
+`lock` records files relative to that effective prefix, including targets with
+absolute install destinations. Their Nix recipes still need to copy the bundle
+to `$out` in `postInstall`; recording metadata does not relocate the install.
+The capture requires one owned prefix and rejects mixed roots, missing files,
+and symlinks that escape it.
+
 `lib.cmake-purifier.readLock { src, lockFile ? … }` reads the lockfile
 into the shape that every nix-purifier shares,
 `{ purifier, entries, outputs, problems }`, for tools that read the locks

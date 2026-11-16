@@ -1,0 +1,30 @@
+{
+  "version": 3,
+  "project": {
+    "name": "bundle_prefix",
+    "version": "1.0"
+  },
+  "definitionHash": "dffbd435979207a1d46f9cd03c30e71741f9e55c55db0a130b2dc2037e55f483",
+  "cmakeFlags": [],
+  "artifacts": [],
+  "dependencies": [],
+  "gitCheckouts": [],
+  "hgCheckouts": [],
+  "svnCheckouts": [],
+  "cvsCheckouts": [],
+  "outputs": {
+    "files": [
+      "bin/bundle-probe",
+      "share/payload.txt"
+    ],
+    "targets": {
+      "bundle-probe": {
+        "type": "EXECUTABLE",
+        "files": [
+          "bin/bundle-probe"
+        ]
+      }
+    }
+  },
+  "contentHash": "sha256:9f887d28a64be033d3db0dcf2e52dbca3982e9da4cb6aa29cb6b257d9a65c6ed"
+}

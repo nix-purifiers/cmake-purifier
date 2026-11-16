@@ -26,8 +26,9 @@
 # every Mercurial, Subversion and CVS checkout by building the fetcher of
 # the sandbox build (pkgs/cmake-purifier/prefetch-vcs.nix).
 #
-# The outputs come from the install into prefix/: `files` is every file
-# the install wrote (install_manifest.txt in build/), relative to prefix/.
+# The outputs come from install_manifest.txt in build/: `files` is every
+# installed file relative to the requested prefix, or to the project's
+# effective bundle prefix when it is contained in the owned build directory.
 # `targets` maps each installed target of the File API's code model in
 # build/ to its type and the installed files of its artifacts. When the
 # lock run did not build, there is no install and the lockfile records no
@@ -44,6 +45,7 @@ from typing import NoReturn
 # python3 -I leaves the script's own directory out of the module path.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import records
+import installed
 from urls import https_of, url_path
 
 (
@@ -244,43 +246,12 @@ for dep in observed["dependencies"]:
     dependency["declared"] = dep["declared"]
     dependencies.append(dependency)
 
-# Outputs, from the install and the File API.
-outputs = None
-manifest = os.path.join(build_dir, "install_manifest.txt")
-if os.path.isdir(prefix) and os.path.exists(manifest):
-    root_dir = os.path.realpath(prefix)
-    with open(manifest) as lines:
-        installed = sorted(
-            os.path.relpath(line.strip(), root_dir) for line in lines if line.strip()
-        )
-    installed_set = set(installed)
-    installed_targets: dict[str, dict] = {}
-    reply = os.path.join(build_dir, ".cmake", "api", "v1", "reply")
-    indexes = sorted(f for f in os.listdir(reply) if f.startswith("index-"))
-    if not indexes:
-        fail(f"CMake wrote no File API reply in {reply}")
-    with open(os.path.join(reply, indexes[-1])) as f:
-        index = json.load(f)
-    codemodel_file = next(
-        o["jsonFile"] for o in index["objects"] if o["kind"] == "codemodel"
-    )
-    with open(os.path.join(reply, codemodel_file)) as f:
-        codemodel = json.load(f)
-    for target_ref in codemodel["configurations"][0]["targets"]:
-        with open(os.path.join(reply, target_ref["jsonFile"])) as f:
-            target = json.load(f)
-        if "install" not in target:
-            continue
-        names = {os.path.basename(a["path"]) for a in target.get("artifacts", [])}
-        target_files = sorted(
-            os.path.join(d["path"], n)
-            for d in target["install"]["destinations"]
-            for n in names
-            if os.path.join(d["path"], n) in installed_set
-        )
-        if target_files:
-            installed_targets[target["name"]] = {"type": target["type"], "files": target_files}
-    outputs = {"files": installed, "targets": installed_targets}
+# Outputs, from the install and the File API. Build-local bundle prefixes are
+# normalized without serializing the scratch directory into the lockfile.
+try:
+    outputs = installed.read_outputs(build_dir, prefix)
+except ValueError as error:
+    fail(str(error))
 
 
 def by_repo_ref(table):
