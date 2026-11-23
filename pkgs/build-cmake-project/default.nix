@@ -396,6 +396,10 @@ else
               realTool "svn" subversion "svn"
             }" "${realTool "cvs" cvs "cvs"}"
           cmakeFlagsArray+=(-C "$NIX_BUILD_TOP/cmake-purifier/cache.cmake")
+          # The shims come first on PATH too, for the configure of a nested
+          # project, which reads no GIT_EXECUTABLE from this cache; the lock
+          # run puts its wrappers on PATH in the same way.
+          export PATH="$NIX_BUILD_TOP/cmake-purifier:$PATH"
         ''
         # The ranlib of darwin, cctools' libtool, writes the ids of the build
         # user into an archive's symbol table, and a darwin build runs as

@@ -69,6 +69,12 @@ the lock run after the configure, for a project whose build cannot run on
 the machine that locks; the lockfile then records no outputs, and misses
 anything the build itself downloads.
 
+The version-control wrappers of the lock run, and the replaying shims of
+the sandbox build, are named in `GIT_EXECUTABLE` (and the hg, svn and
+cvs variables) of the configure and come first on `PATH`, so a nested
+project that a super-project configures in a separate cmake run finds
+them too.
+
 `--target <target>` builds the named targets in place of `all`, and
 `--no-install` skips the install, for a project whose sandbox build
 builds some targets and keeps something other than an install tree,

@@ -319,10 +319,16 @@ else
         (
           proxy_env "$port" "$work/mitmproxy/mitmproxy-ca-cert.pem"
           unset CPM_SOURCE_CACHE
+          # The wrappers come first on PATH as well, for a nested project:
+          # a super-project that configures its parts in separate cmake runs
+          # passes them no GIT_EXECUTABLE, and their find_package(Git) and
+          # FetchContent search PATH. A git outside the wrapper reaches the
+          # recording proxy as plain HTTP, whose ref advertisements change.
+          vcsPath="$work:$PATH"
           if [ -n "$preConfigure" ]; then
             echo "cmake-purifier: running the pre-configure command" >&2
             CMAKE_PURIFIER_BUILD_DIR="$work/build" CMAKE_PURIFIER_SOURCE_DIR="$source" \
-              bash -euo pipefail -c "$preConfigure" >&2
+              PATH="$vcsPath" bash -euo pipefail -c "$preConfigure" >&2
           fi
           # CMAKE_INSTALL_LIBDIR and CMAKE_BUILD_TYPE are what nixpkgs' CMake
           # setup hook sets, so that the recorded outputs match the outputs
@@ -330,7 +336,7 @@ else
           # installed files, such as <package>-targets-release.cmake. A
           # -DCMAKE_BUILD_TYPE among the user's arguments comes later and
           # wins, and the lockfile records it for the sandbox build.
-          cmake -S "$source" -B "$work/build" \
+          PATH="$vcsPath" cmake -S "$source" -B "$work/build" \
             -DCMAKE_INSTALL_LIBDIR=lib \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES="$provider" \
@@ -352,11 +358,11 @@ else
             for target in ''${targets[@]+"''${targets[@]}"}; do
               targetArgs+=(--target "$target")
             done
-            cmake --build "$work/build" --parallel "''${CMAKE_BUILD_PARALLEL_LEVEL:-$(nproc)}" \
+            PATH="$vcsPath" cmake --build "$work/build" --parallel "''${CMAKE_BUILD_PARALLEL_LEVEL:-$(nproc)}" \
               ''${targetArgs[@]+"''${targetArgs[@]}"} >&2
             if [ -z "$noInstall" ]; then
               echo "cmake-purifier: installing $source to record its outputs" >&2
-              cmake --install "$work/build" --prefix "$work/prefix" >&2
+              PATH="$vcsPath" cmake --install "$work/build" --prefix "$work/prefix" >&2
             fi
           fi
         )

@@ -73,6 +73,33 @@ cmake-purifier lock -S "$partProbe" --target wanted --no-install \
   --pre-configure 'touch "$CMAKE_PURIFIER_BUILD_DIR/seed.txt"'
 jq -e '.outputs == null and .cmakeFlags == []' "$partProbe/cmake-purifier.lock.json" > /dev/null
 
+# A nested project: the configure of a super-project runs cmake of a
+# separate project, which gets no GIT_EXECUTABLE and clones with the git
+# on PATH. The lock records the clone as a checkout, through the
+# wrapper on PATH, rather than the ref advertisement of git's HTTP
+# protocol as a file.
+nestedProbe="$scratch/nested-probe"
+mkdir -p "$nestedProbe/nested"
+cat > "$nestedProbe/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.24)
+project(nested_probe LANGUAGES NONE)
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -S "${CMAKE_CURRENT_SOURCE_DIR}/nested" -B "${CMAKE_BINARY_DIR}/nested"
+  COMMAND_ERROR_IS_FATAL ANY)
+CMAKE
+cat > "$nestedProbe/nested/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.24)
+project(nested LANGUAGES NONE)
+include(FetchContent)
+FetchContent_Declare(expected-lite
+  GIT_REPOSITORY https://github.com/martinmoene/expected-lite.git
+  GIT_TAG v0.8.0)
+FetchContent_Populate(expected-lite)
+CMAKE
+cmake-purifier lock --no-build -S "$nestedProbe"
+jq -e '(.gitCheckouts | length) == 1 and ([.artifacts[] | select(.path | test("/info/refs"))] | length) == 0' \
+  "$nestedProbe/cmake-purifier.lock.json" > /dev/null
+
 # Copies a fixture to $scratch/<name> and prefetches it, with the network.
 prefetch() {
   cp -r "$root/tests/fixtures/$1" "$scratch/$1"
