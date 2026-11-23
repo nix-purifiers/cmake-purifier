@@ -51,6 +51,28 @@ offline cmake -S "$runtimeProbe" -B "$runtimeProbe/build" -C "$runtimeProbe/.cma
 [ "$(sed -n '2p' "$runtimeProbe/selected-runtime.txt")" = Debug ]
 [ "$(sed -n '3p' "$runtimeProbe/selected-runtime.txt")" = caller-lib ]
 
+# --pre-configure, --target and --no-install: a project whose build
+# directory must hold a file before the configure, built one target at a
+# time and kept without an install, as a super-project built in parts
+# is. The configure fails without the file, the build fails if `all` is
+# built, and the install fails if it runs.
+partProbe="$scratch/part-probe"
+mkdir -p "$partProbe"
+cat > "$partProbe/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.24)
+project(part_probe LANGUAGES NONE)
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/seed.txt")
+  message(FATAL_ERROR "the pre-configure command did not run")
+endif()
+add_custom_target(wanted COMMAND "${CMAKE_COMMAND}" -E touch wanted.txt)
+add_custom_target(unwanted ALL COMMAND "${CMAKE_COMMAND}" -E false)
+install(CODE "message(FATAL_ERROR \"the install ran\")")
+CMAKE
+# shellcheck disable=SC2016
+cmake-purifier lock -S "$partProbe" --target wanted --no-install \
+  --pre-configure 'touch "$CMAKE_PURIFIER_BUILD_DIR/seed.txt"'
+jq -e '.outputs == null and .cmakeFlags == []' "$partProbe/cmake-purifier.lock.json" > /dev/null
+
 # Copies a fixture to $scratch/<name> and prefetches it, with the network.
 prefetch() {
   cp -r "$root/tests/fixtures/$1" "$scratch/$1"

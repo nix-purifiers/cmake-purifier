@@ -69,6 +69,17 @@ the lock run after the configure, for a project whose build cannot run on
 the machine that locks; the lockfile then records no outputs, and misses
 anything the build itself downloads.
 
+`--target <target>` builds the named targets in place of `all`, and
+`--no-install` skips the install, for a project whose sandbox build
+builds some targets and keeps something other than an install tree,
+such as a super-project built one part at a time; the lockfile then
+records no outputs, and the sandbox build sets its own `buildPhase` and
+`installPhase`. `--pre-configure <command>` runs a shell command before
+the configure, with the build directory in `CMAKE_PURIFIER_BUILD_DIR`
+and the source directory in `CMAKE_PURIFIER_SOURCE_DIR`, for a build
+directory that must hold files before the configure, such as parts
+built earlier; the sandbox build does the same in its `preConfigure`.
+
 ## A build from the lockfile
 
 The sandbox build and the development loop after `cmake-purifier prefetch`

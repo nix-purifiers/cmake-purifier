@@ -2,7 +2,7 @@
 #
 # The `cmake-purifier` command.
 #
-#   cmake-purifier lock [--no-build] [-S <source dir>] [--lockfile <path>] [<cmake configure arguments>...]
+#   cmake-purifier lock [--no-build] [--no-install] [--target <target>]... [--pre-configure <command>] [-S <source dir>] [--lockfile <path>] [<cmake configure arguments>...]
 #   cmake-purifier update [-S <source dir>] [--lockfile <path>] [<dependency or repository>...]
 #   cmake-purifier prefetch [-S <source dir>] [--lockfile <path>]
 #   cmake-purifier replay [-S <source dir>] [--lockfile <path>] -- <command>...
@@ -26,7 +26,14 @@
 # scratch prefix and records what it installed, so that Nix knows the
 # outputs of the build without building it. `--no-build` stops after the
 # configure, and then the lockfile misses what the build itself downloads,
-# and records no outputs.
+# and records no outputs. `--target` builds the named targets in place of
+# `all`, for a project whose sandbox build builds only those, and
+# `--no-install` skips the install, so the lockfile records no outputs.
+# `--pre-configure` runs a shell command before the configure, with the
+# build directory in CMAKE_PURIFIER_BUILD_DIR and the source directory
+# in CMAKE_PURIFIER_SOURCE_DIR, for a project whose build directory must
+# hold files before the configure; the sandbox build does the same in
+# its preConfigure.
 #
 # `lock` keeps what the lockfile already resolved: a checkout whose ref
 # moves, such as a git branch, an svn checkout at HEAD or a CVS checkout
@@ -139,7 +146,7 @@ else
 
       usage() {
         cat >&2 <<'EOF'
-      usage: cmake-purifier lock [--no-build] [-S <source dir>] [--lockfile <path>] [<cmake configure arguments>...]
+      usage: cmake-purifier lock [--no-build] [--no-install] [--target <target>]... [--pre-configure <command>] [-S <source dir>] [--lockfile <path>] [<cmake configure arguments>...]
              cmake-purifier update [-S <source dir>] [--lockfile <path>] [<dependency or repository>...]
              cmake-purifier prefetch [-S <source dir>] [--lockfile <path>]
              cmake-purifier replay [-S <source dir>] [--lockfile <path>] -- <command>...
@@ -157,13 +164,17 @@ else
       command=$1
       shift
 
-      # -S, --lockfile, --repo and --no-build are read here, -S in the separate
-      # and the attached form. For lock, every other argument goes to cmake,
+      # -S, --lockfile, --repo, --no-build, --no-install, --target and
+      # --pre-configure are read here, each option with a value in the
+      # separate and the attached form. For lock, every other argument goes to cmake,
       # and for replay, everything after `--` is the command.
       source=.
       lockfile=
       repo=
       noBuild=
+      noInstall=
+      targets=()
+      preConfigure=
       updateNames=()
       updateAll=
       args=()
@@ -175,6 +186,11 @@ else
           --lockfile=*) lockfile=''${1#--lockfile=}; shift ;;
           --repo) [ $# -ge 2 ] || usage; repo=$2; shift 2 ;;
           --no-build) noBuild=1; shift ;;
+          --no-install) noInstall=1; shift ;;
+          --target) [ $# -ge 2 ] || usage; targets+=("$2"); shift 2 ;;
+          --target=*) targets+=("''${1#--target=}"); shift ;;
+          --pre-configure) [ $# -ge 2 ] || usage; preConfigure=$2; shift 2 ;;
+          --pre-configure=*) preConfigure=''${1#--pre-configure=}; shift ;;
           --) [ "$command" = replay ] || usage; shift; args+=("$@"); break ;;
           *) args+=("$1"); shift ;;
         esac
@@ -303,6 +319,11 @@ else
         (
           proxy_env "$port" "$work/mitmproxy/mitmproxy-ca-cert.pem"
           unset CPM_SOURCE_CACHE
+          if [ -n "$preConfigure" ]; then
+            echo "cmake-purifier: running the pre-configure command" >&2
+            CMAKE_PURIFIER_BUILD_DIR="$work/build" CMAKE_PURIFIER_SOURCE_DIR="$source" \
+              bash -euo pipefail -c "$preConfigure" >&2
+          fi
           # CMAKE_INSTALL_LIBDIR and CMAKE_BUILD_TYPE are what nixpkgs' CMake
           # setup hook sets, so that the recorded outputs match the outputs
           # of the sandbox build. The build type decides the names of some
@@ -327,9 +348,16 @@ else
           if [ -z "$noBuild" ]; then
             echo "cmake-purifier: building $source to record what the build downloads" >&2
             # A bare --parallel lets make start any number of jobs.
-            cmake --build "$work/build" --parallel "''${CMAKE_BUILD_PARALLEL_LEVEL:-$(nproc)}" >&2
-            echo "cmake-purifier: installing $source to record its outputs" >&2
-            cmake --install "$work/build" --prefix "$work/prefix" >&2
+            targetArgs=()
+            for target in ''${targets[@]+"''${targets[@]}"}; do
+              targetArgs+=(--target "$target")
+            done
+            cmake --build "$work/build" --parallel "''${CMAKE_BUILD_PARALLEL_LEVEL:-$(nproc)}" \
+              ''${targetArgs[@]+"''${targetArgs[@]}"} >&2
+            if [ -z "$noInstall" ]; then
+              echo "cmake-purifier: installing $source to record its outputs" >&2
+              cmake --install "$work/build" --prefix "$work/prefix" >&2
+            fi
           fi
         )
         kill "$recorder"
