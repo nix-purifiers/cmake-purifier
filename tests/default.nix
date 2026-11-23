@@ -508,6 +508,19 @@ in
 
   nix-library = import ./nix-library.nix { inherit pkgs purifier; };
 
+  # The same lockfile at another place gives the same derivation, so a
+  # change elsewhere in a flake, which moves every path inside it to a
+  # new store copy, rebuilds nothing.
+  lockfile-location =
+    let
+      moved = buildCMakeProject {
+        src = ./fixtures/basic;
+        lockFile = builtins.toFile "cmake-purifier.lock.json" (builtins.readFile basicLockFile);
+      };
+    in
+    assert moved.packages.purifier-basic.drvPath == basicPackage.drvPath;
+    pkgs.runCommand "lockfile-location" { } "touch $out";
+
   # The command builds, which runs shellcheck on it.
   inherit cmake-purifier;
 }

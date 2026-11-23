@@ -146,6 +146,17 @@ else
       projectSrc = src;
     };
     inherit (sources) lock;
+    # The file name of the lockfile, for the messages of the build, without
+    # its store hash when the lockfile is a store file and without string
+    # context: in a flake the path of the lockfile lies in the store copy
+    # of the whole repository, which would make the derivation change with
+    # every file of the repository.
+    lockFileName =
+      let
+        name = builtins.unsafeDiscardStringContext (baseNameOf (toString lockFile));
+        unhashed = builtins.match "[0-9a-z]{32}-(.*)" name;
+      in
+      if unhashed == null then name else builtins.head unhashed;
     # A tool the build checks out with, for the commands its shim passes on;
     # empty when the lockfile has no checkouts of it.
     realTool =
@@ -387,7 +398,7 @@ else
           # no downloads, and go around it.
           export no_proxy="localhost,127.0.0.1,::1" NO_PROXY="localhost,127.0.0.1,::1"
           if [ "$(bash ${./definition-hash.sh} .)" != ${lib.escapeShellArg lock.definitionHash} ]; then
-            echo "cmake-purifier: ${toString lockFile} is older than the project: a CMakeLists.txt or *.cmake file changed since it was written. Run \`cmake-purifier lock\` to lock the project again." >&2
+            echo "cmake-purifier: the lockfile ${lockFileName} is older than the project: a CMakeLists.txt or *.cmake file changed since it was written. Run \`cmake-purifier lock\` to lock the project again." >&2
             exit 1
           fi
           bash ${./write-cache.sh} ${sources.tree} "$NIX_BUILD_TOP/cmake-purifier/sources" "$NIX_BUILD_TOP/cmake-purifier/cache.cmake" \
