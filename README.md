@@ -681,3 +681,42 @@ The `.projections.otp.applicationRoot` view composes the native compiled
 schema and runtime applications for `ERL_LIBS`. The native Erlang compiler supplies
 module metadata, and generated source bytes remain unchanged. The selected
 `beamPackages` and `thrift` packages remain overridable through the package scope.
+
+## Native Thrift Lua packages
+
+Request `thriftLuaPackage = { };` alongside captured Thrift resources:
+
+```nix
+project = pkgs.cmake-purifier.buildCMakeProject {
+  src = ./.;
+  pname = "example-schemas";
+  version = "1.0.0";
+  resourceRoots."." = "share/schemas";
+  resourceSchema = { format = "thrift"; entrypoints = [ "main.thrift" ]; };
+  thriftLuaPackage = { lua = pkgs.lua5_4; };
+};
+```
+
+`project.packages.thrift-lua-bindings` contains unchanged native generated Lua
+modules. The original Thrift SDK is built from the selected compiler's full source
+through its own Autotools recipes, including all four native C libraries. Its
+original Lua source files and C modules are installed using the selected Lua 5.4
+SDK's standard layout and native `toLuaModule` constructor.
+
+An ordinary Nix Lua consumer can use
+`pkgs.lua5_4.withPackages (_: [ project.packages.thrift-lua-bindings ])` and call
+`require()` with the native compiler's module names. The package's
+`projections.lua` also exposes `runtime`, `modulePath`, `moduleCatalog` and `abi`.
+A native dotted namespace such as `proof.main` keeps its module identity
+`proof.main_ttypes`; its unchanged generated file is installed as
+`proof/main_ttypes.lua` for Lua's standard module searcher. Native generated
+classes remain global, as defined by the original backend. Included type modules
+can be loaded explicitly before client use; no replacement exports are added.
+
+The builder records every original SDK source file, native library, compiler
+source dependency and loaded module. It checks generated files against their
+isolated native compiler outputs and rejects output collisions or changes to
+original SDK/builtin/earlier generated bindings. The selected interpreter must be
+an original unwrapped Lua 5.4 package. No LuaRocks metadata is manufactured.
+Binary protocol and generated client/processor RPC consumers are covered; other
+protocol behavior and cross compilation are not claimed.

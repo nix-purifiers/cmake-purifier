@@ -161,6 +161,10 @@ in
     inherit pkgs purifier pubProjectorSource;
     build = buildCMakeProject;
   };
+  thrift-lua-products = import ./thrift-lua-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   thrift-erlang-products = import ./thrift-erlang-products.nix {
     inherit pkgs;
     build = buildCMakeProject;
