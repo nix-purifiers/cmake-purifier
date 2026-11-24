@@ -221,7 +221,10 @@ else
       inherit thriftDartPackage;
     };
     thriftPhp = (callPackage ../thrift-php-products { inherit purifier composerPurifierSource; }) (
-      { resources = resourceViews.resources; inherit thriftPhpPackage thriftPhpRuntimeBuilder; }
+      {
+        resources = resourceViews.resources;
+        inherit thriftPhpPackage thriftPhpRuntimeBuilder;
+      }
       // lib.optionalAttrs (thriftPhpRuntime != null) { applicationPhp = thriftPhpRuntime; }
     );
     flatbuffersPython = callPackage ../flatbuffers-python-products { inherit purifier; } {
