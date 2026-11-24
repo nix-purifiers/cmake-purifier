@@ -112,6 +112,9 @@ jobs:
         run: |
           nix flake check --option sandbox true --option allow-import-from-derivation false -L
           nix flake check --all-systems --no-build
+      - name: Compose the native Thrift Perl producer with Carton
+        if: matrix.job == 'flake-check' && matrix.runner != 'macos-15'
+        run: python3 -B tests/thrift-perl/carton-consumer.py
       - name: Relock the fixtures and compare
         if: matrix.job == 'conformance-relock'
         run: |
