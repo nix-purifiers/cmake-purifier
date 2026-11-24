@@ -703,3 +703,6 @@ its matching SDK producer, source bytes, native metadata and selected Perl.
 Pass the product as a dependency to Carton for capture and offline replay;
 `projections.perl` on the CMake result exposes the same composed library view.
 Its `bin/perl` loader includes the observed SDK and generated modules.
+For Carton capture, select the same original `applicationPerl` through
+`thriftPerlRuntime` and the Carton scope's `perl` override. Replay checks the
+SDK identity as well as the producer identities.
