@@ -13,6 +13,7 @@
   cargoProjector,
   npmProjector,
   gradleProjector,
+  pubProjectorSource,
   # The shared library's functions.
   purifier,
   # buildCMakeProject of the flake's package overlay, and
@@ -156,6 +157,10 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  thrift-dart-products = import ./thrift-dart-products.nix {
+    inherit pkgs purifier pubProjectorSource;
+    build = buildCMakeProject;
+  };
   thrift-erlang-products = import ./thrift-erlang-products.nix {
     inherit pkgs;
     build = buildCMakeProject;

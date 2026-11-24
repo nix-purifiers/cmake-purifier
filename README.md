@@ -657,6 +657,21 @@ checks class and constant ownership across active programs, and packaging
 verifies the gem's source bytes against the compiler output. The caller's
 Ruby and Thrift packages remain overridable through the package scope.
 
+Native Thrift Dart packages can be selected with
+`thriftDartPackage = { roots = [ "main" "value" ]; };` alongside captured
+Thrift resources. List the package roots emitted for every active program,
+including imported programs. `packages.thrift-dart-bindings` retains the
+compiler's complete native package trees and manifests; names and versions
+come from those manifests. Native Dart namespaces determine the package roots.
+
+Pass `.projections.pub.pathSources` to the released Pub purifier's
+`buildPubProject` constructor when building an ordinary Dart consumer. The
+declarations retain the generated source producer and the original matching
+Thrift SDK source package. Native Pub resolves the SDK's complete dependency
+constraints against the consumer's captured hosted downloads. Generated Dart
+and SDK method bytes stay unchanged. Per-program generation rejects output
+collisions, SDK package shadowing and an incomplete declared package graph.
+
 Native Thrift Erlang applications can be selected with
 `thriftErlangPackage = { name = "example_types"; version = "1.0.0"; };`
 alongside captured Thrift resources. `packages.thrift-erlang-bindings` contains

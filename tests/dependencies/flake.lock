@@ -732,6 +732,23 @@
         "url": "https://github.com/nix-purifiers/npm-purifier"
       }
     },
+    "pub-projector": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794627520,
+        "narHash": "sha256-L+VhFD8SMeORhmqjBCcq50khJgGckM98l9EddCFjB58=",
+        "owner": "nix-purifiers",
+        "repo": "pub-purifier",
+        "rev": "4fbbb96cc148c83b8d5b492700c6c7d9ebb96e7d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-purifiers",
+        "ref": "v0.1.4",
+        "repo": "pub-purifier",
+        "type": "github"
+      }
+    },
     "purifier": {
       "inputs": {
         "caisson": "caisson_3",
@@ -783,6 +800,7 @@
         "gradle-projector": "gradle-projector",
         "nixpkgs": "nixpkgs_2",
         "npm-projector": "npm-projector",
+        "pub-projector": "pub-projector",
         "treefmt-nix": "treefmt-nix"
       }
     },

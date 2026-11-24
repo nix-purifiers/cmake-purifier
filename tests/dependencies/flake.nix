@@ -12,6 +12,10 @@
   inputs.npm-projector.url = "git+https://github.com/nix-purifiers/npm-purifier?ref=refs/tags/v0.1.13";
   inputs.go-projector.url = "github:nix-purifiers/go-purifier/v0.1.6";
   inputs.go-projector.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.pub-projector = {
+    url = "github:nix-purifiers/pub-purifier/v0.1.4";
+    flake = false;
+  };
   inputs.gradle-projector = {
     url = "git+https://github.com/nix-purifiers/gradle-purifier?ref=refs/tags/v0.1.23";
     flake = false;
