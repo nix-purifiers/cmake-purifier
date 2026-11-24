@@ -115,6 +115,23 @@ cmake-purifier lock --no-build -S "$writingProbe"
 rm "$writingProbe/generated.cmake"
 cmake-purifier prefetch -S "$writingProbe"
 
+# A project whose configure downloads a page of a Python package index,
+# as a pip install does. The lock warns and names the page.
+indexProbe="$scratch/index-probe"
+mkdir -p "$indexProbe"
+cat > "$indexProbe/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.24)
+project(index_probe LANGUAGES NONE)
+file(DOWNLOAD https://pypi.org/simple/six/ "${CMAKE_BINARY_DIR}/six.html" STATUS status)
+list(GET status 0 code)
+if(NOT code EQUAL 0)
+  message(FATAL_ERROR "download failed: ${status}")
+endif()
+CMAKE
+cmake-purifier lock --no-build -S "$indexProbe" 2> "$scratch/index-probe.log"
+grep -q 'warning: the lockfile records pages of a Python package index' "$scratch/index-probe.log"
+grep -q '  https://pypi.org/simple/six/' "$scratch/index-probe.log"
+
 # Copies a fixture to $scratch/<name> and prefetches it, with the network.
 prefetch() {
   cp -r "$root/tests/fixtures/$1" "$scratch/$1"

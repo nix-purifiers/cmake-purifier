@@ -69,6 +69,13 @@ the lock run after the configure, for a project whose build cannot run on
 the machine that locks; the lockfile then records no outputs, and misses
 anything the build itself downloads.
 
+A page of a Python package index that lists a project's releases, from
+the simple repository API or PyPI's JSON API, changes whenever the
+project publishes a file, so the sandbox build stops matching its hash.
+The lock run warns when it records one (`index_page` in `lock/urls.py`)
+and names each page. Such pages come from a `pip install` during the
+configure or the build.
+
 The version-control wrappers of the lock run, and the replaying shims of
 the sandbox build, are named in `GIT_EXECUTABLE` (and the hg, svn and
 cvs variables) of the configure and come first on `PATH`, so a nested

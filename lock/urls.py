@@ -29,3 +29,17 @@ def https_of(url):
         return None
     host, path = found.groups()
     return f"https://{host}/{path.lstrip('/')}"
+
+
+def index_page(url):
+    """Whether a URL is a page of a Python package index that lists a
+    project's releases: a page of the simple repository API (PEP 503 and
+    PEP 691), on any index, or of the JSON API of PyPI. The index rewrites
+    such a page when the project publishes a file, so its hash in a
+    lockfile goes stale."""
+    parts = urllib.parse.urlsplit(url)
+    components = [c for c in parts.path.split("/") if c]
+    # The index root `.../simple/` and a project page `.../simple/<name>/`.
+    if components[-1:] == ["simple"] or (components[-2:-1] == ["simple"] and parts.path.endswith("/")):
+        return True
+    return parts.hostname in ("pypi.org", "pypi.python.org") and components[:1] == ["pypi"] and components[-1:] == ["json"]

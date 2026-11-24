@@ -46,7 +46,7 @@ from typing import NoReturn
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import records
 import installed
-from urls import https_of, url_path
+from urls import https_of, index_page, url_path
 
 (
     work,
@@ -289,3 +289,19 @@ print(
     f"{len(artifacts)} checkouts",
     file=sys.stderr,
 )
+# A package index rewrites the page of a project when the project
+# publishes a file, and the sandbox build then fetches a page whose hash
+# no longer matches. Such pages come from a pip install in the configure
+# or the build.
+index_pages = sorted(u for u in files if index_page(u))
+if index_pages:
+    print(
+        "cmake-purifier: warning: the lockfile records pages of a Python package index, "
+        "which change when a project publishes a release, and the build from the lockfile "
+        "fails once one does:\n"
+        + "".join(f"  {u}\n" for u in index_pages)
+        + "cmake-purifier: a pip install during the configure or the build downloads them. "
+        "A pip install whose packages are already in the Python environment of the build, "
+        "and that cannot reach an index, downloads none.",
+        file=sys.stderr,
+    )
