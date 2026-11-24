@@ -84,6 +84,7 @@
           {
             checks = import ../../../tests {
               inherit pkgs;
+              pubProjectorSource = inputs.pub-projector;
               goProjector = inputs.go-projector.packages.${system}.default;
               gradleProjector =
                 args:

@@ -119,6 +119,7 @@
   thriftPythonPackage ? null,
   thriftErlangPackage ? null,
   thriftRubyPackage ? null,
+  thriftDartPackage ? null,
   thriftRubyDependencies ? [ ],
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
@@ -210,6 +211,10 @@ else
     thriftRuby = callPackage ../thrift-ruby-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftRubyPackage thriftRubyDependencies;
+    };
+    thriftDart = callPackage ../thrift-dart-products { } {
+      resources = resourceViews.resources;
+      inherit thriftDartPackage;
     };
     flatbuffersPython = callPackage ../flatbuffers-python-products { inherit purifier; } {
       resources = resourceViews.resources;
@@ -319,6 +324,7 @@ else
       // lib.optionalAttrs (thriftCGLibPackage != null) { thrift-c-glib = thriftCGLib; }
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (thriftRubyPackage != null) thriftRuby.projections
+      // lib.optionalAttrs (thriftDartPackage != null) thriftDart.projections
       // lib.optionalAttrs (thriftErlangPackage != null) thriftErlang.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // schemaJvm
@@ -376,6 +382,7 @@ else
         "thriftPythonPackage"
         "thriftErlangPackage"
         "thriftRubyPackage"
+        "thriftDartPackage"
         "thriftRubyDependencies"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
@@ -495,6 +502,10 @@ else
     || (resourceRoots != { } && pname != "thrift-ruby-bindings")
     || throw "cmake-purifier: thriftRubyPackage requires captured resources and a distinct project name";
   assert
+    thriftDartPackage == null
+    || (resourceRoots != { } && pname != "thrift-dart-bindings")
+    || throw "cmake-purifier: thriftDartPackage requires captured resources and a distinct project name";
+  assert
     flatbuffersPythonPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-python-bindings" && thriftPythonPackage == null)
     || throw "cmake-purifier: flatbuffersPythonPackage requires resourceRoots, a distinct project name, and its own Python projection";
@@ -541,6 +552,7 @@ else
     // lib.optionalAttrs (thriftJavaPackage != null) { thrift-java-bindings = thriftJava; }
     // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
     // lib.optionalAttrs (thriftRubyPackage != null) { thrift-ruby-bindings = thriftRuby; }
+    // lib.optionalAttrs (thriftDartPackage != null) { thrift-dart-bindings = thriftDart; }
     // lib.optionalAttrs (thriftErlangPackage != null) { thrift-erlang-bindings = thriftErlang; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;
