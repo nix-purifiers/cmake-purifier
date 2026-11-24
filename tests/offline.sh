@@ -100,6 +100,21 @@ cmake-purifier lock --no-build -S "$nestedProbe"
 jq -e '(.gitCheckouts | length) == 1 and ([.artifacts[] | select(.path | test("/info/refs"))] | length) == 0' \
   "$nestedProbe/cmake-purifier.lock.json" > /dev/null
 
+# A project whose configure writes a CMake file into its source tree. The
+# lockfile holds the hash of the tree before the configure, which is the
+# tree the sandbox build checks, so the lockfile matches the source once
+# the file is gone.
+writingProbe="$scratch/writing-probe"
+mkdir -p "$writingProbe"
+cat > "$writingProbe/CMakeLists.txt" <<'CMAKE'
+cmake_minimum_required(VERSION 3.24)
+project(writing_probe LANGUAGES NONE)
+file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/generated.cmake" "set(GENERATED ON)\n")
+CMAKE
+cmake-purifier lock --no-build -S "$writingProbe"
+rm "$writingProbe/generated.cmake"
+cmake-purifier prefetch -S "$writingProbe"
+
 # Copies a fixture to $scratch/<name> and prefetches it, with the network.
 prefetch() {
   cp -r "$root/tests/fixtures/$1" "$scratch/$1"

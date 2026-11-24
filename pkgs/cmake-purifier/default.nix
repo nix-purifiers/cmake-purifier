@@ -228,6 +228,10 @@ else
         command -v cmake >/dev/null 2>&1 ||
           die "cmake is not on PATH; activate your existing CMake installation before locking"
         started=$SECONDS
+        # The hash of the build definition as the sandbox build sees it,
+        # before the configure: a project may write CMake files into its
+        # source tree when it configures or builds.
+        definition=$(PATH="${git}/bin:$PATH" bash "$nixlib/definition-hash.sh" "$source")
         # The physical path, as the tools record their working directories:
         # on macOS the temporary directory is under the symlinks /var or /tmp.
         work=$(realpath "$(mktemp -d)")
@@ -374,7 +378,7 @@ else
         jq -n '$ARGS.positional' --args -- ''${args[@]+"''${args[@]}"} > "$work/flags.json"
         "$python" -I "$lockdir/assemble.py" "$work" "$lockVersion" "$lockfile" "$nixpkgs" \
           "$nixlib" "$purifierlib" "$realGit" "$realHg" "$realSvn" "$prefetchGit" \
-          "$(PATH="${git}/bin:$PATH" bash "$nixlib/definition-hash.sh" "$source")" "$work/pins.json"
+          "$definition" "$work/pins.json"
         echo "cmake-purifier: locked in $((SECONDS - started)) seconds" >&2
       }
 
