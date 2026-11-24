@@ -697,5 +697,9 @@ Load the generated library and SDK with their `lib/perl5` directories on
 `PERL5LIB`. Each active IDL program is generated independently, and conflicting
 module paths fail before installation. Declare distinct native Perl namespaces
 for programs that would otherwise both emit `Types.pm` or `Constants.pm`.
-Generated module bytes are preserved through native installation. This
-installed-library product does not yet provide a Carton dependency projection.
+Generated module bytes are preserved through native installation.
+The product's `.projections.perl` retains the original installed producer and
+its matching SDK producer, source bytes, native metadata and selected Perl.
+Pass the product as a dependency to Carton for capture and offline replay;
+`projections.perl` on the CMake result exposes the same composed library view.
+Its `bin/perl` loader includes the observed SDK and generated modules.

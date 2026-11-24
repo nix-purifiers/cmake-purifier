@@ -101,4 +101,8 @@ pkgs.runCommand "thrift-perl-native-cmake-consumers"
     python ${./thrift-perl/controls.py} "$controlsPath" "$out/runtime-shadow-controls.json"
     ${perl}/bin/perl -I ${first}/lib/perl5 -I ${first.runtime}/lib/perl5 ${./thrift-perl/consume.pl} 0c00010800010000002a0000 > "$out/first.json"
     ${perl}/bin/perl -I ${second}/lib/perl5 -I ${second.runtime}/lib/perl5 ${./thrift-perl/consume.pl} 0c00010800020000002a0000 > "$out/second.json"
+    ${first.projections.perl}/bin/perl ${./thrift-perl/consume.pl} 0c00010800010000002a0000 > "$out/projected-first.json"
+    ${second.projections.perl}/bin/perl ${./thrift-perl/consume.pl} 0c00010800020000002a0000 > "$out/projected-second.json"
+    cp ${first.projections.perl}/catalog.json "$out/first-catalog.json"
+    cp ${second.projections.perl}/catalog.json "$out/second-catalog.json"
   ''

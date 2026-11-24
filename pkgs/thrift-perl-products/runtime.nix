@@ -4,6 +4,7 @@
   perl,
   thrift,
   gnumake,
+  observer,
 }:
 runCommand "thrift-native-perl-runtime"
   {
@@ -15,6 +16,8 @@ runCommand "thrift-native-perl-runtime"
       perl
       gnumake
     ];
+    requestJSON = observer.requestJSON;
+    passAsFile = [ "requestJSON" ];
     passthru = {
       inherit perl;
       sdk = thrift;
@@ -33,4 +36,5 @@ runCommand "thrift-native-perl-runtime"
     cp MYMETA.json "$proof/native-MYMETA.json"
     compilerVersion="$(${thrift}/bin/thrift --version)"
     perl -I "$out/lib/perl5" ${./runtime-proof.pl} MYMETA.json "$compilerVersion" > "$proof/runtime.json"
+    ${observer.command}
   ''

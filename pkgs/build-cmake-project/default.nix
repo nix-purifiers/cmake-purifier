@@ -74,6 +74,7 @@
   # The shared library's functions (lib.purifier of the purifier flake),
   # which the package overlay passes.
   purifier,
+  cartonPurifierSource ? null,
 }:
 {
   src,
@@ -221,6 +222,7 @@ else
     thriftPerl =
       callPackage ../thrift-perl-products
         {
+          inherit purifier cartonPurifierSource;
           perl =
             if thriftPerlRuntime != null then
               thriftPerlRuntime
@@ -346,6 +348,7 @@ else
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (thriftRubyPackage != null) thriftRuby.projections
       // lib.optionalAttrs (thriftDartPackage != null) thriftDart.projections
+      // lib.optionalAttrs (thriftPerlPackage != null) thriftPerl.projections
       // lib.optionalAttrs (thriftErlangPackage != null) thriftErlang.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // schemaJvm

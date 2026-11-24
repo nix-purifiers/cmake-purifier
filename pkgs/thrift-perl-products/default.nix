@@ -6,6 +6,9 @@
   perl,
   thrift,
   gnumake,
+  purifier,
+  cartonPurifierSource,
+  callPackage,
 }:
 { resources, thriftPerlPackage }:
 let
@@ -21,14 +24,44 @@ let
     && builtins.match "[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)*" options.name != null
     && builtins.isString options.version
     && builtins.match "[0-9]+(\\.[0-9]+)*" options.version != null;
-  runtime = import ./runtime.nix {
+  observe = import ./observe.nix {
+    inherit
+      lib
+      python3
+      purifier
+      cartonPurifierSource
+      perl
+      ;
+  };
+  project = callPackage (
+    cartonPurifierSource + "/pkgs/build-carton-project/project-perl-library.nix"
+  ) { inherit purifier; };
+  nativeRuntime = import ./runtime.nix {
     inherit
       runCommand
       perl
       thrift
       gnumake
       ;
+    observer = observe {
+      source = thrift.src;
+      sourceRoot = "lib/perl/lib";
+      probeModules = [ "Thrift" ];
+    };
   };
+  runtimeProjection = project {
+    producer = nativeRuntime;
+    source = thrift.src;
+    roots = [ "lib/perl5" ];
+    sourceRoots."lib/perl5" = "lib/perl/lib";
+    observation = "${nativeRuntime.proof}/observation.json";
+    applicationPerl = perl;
+  };
+  runtime = nativeRuntime.overrideAttrs (old: {
+    passthru = (old.passthru or { }) // {
+      projections.perl = runtimeProjection;
+    };
+  });
   source =
     runCommand "thrift-generated-perl-source"
       {
@@ -49,6 +82,11 @@ let
       ''
         python ${./generate.py} "$specPath" "$out" "$proof"
       '';
+  observer = observe {
+    inherit source;
+    sourceRoot = "lib";
+    dependencies = [ runtime ];
+  };
   installed =
     runCommand "thrift-generated-perl-library"
       {
@@ -60,6 +98,8 @@ let
           perl
           gnumake
         ];
+        requestJSON = observer.requestJSON;
+        passAsFile = [ "requestJSON" ];
         passthru = {
           inherit source runtime perl;
           schemaResources = resources;
@@ -77,7 +117,21 @@ let
         make install
         cp MYMETA.json "$proof/native-MYMETA.json"
         cp ${source.proof}/thrift-perl.json "$proof/thrift-perl.json"
+        ${observer.command}
       '';
+  projection = project {
+    producer = installed;
+    inherit source;
+    roots = [ "lib/perl5" ];
+    sourceRoots."lib/perl5" = "lib";
+    observation = "${installed.proof}/observation.json";
+    dependencies = [ runtime ];
+    applicationPerl = perl;
+  };
 in
 assert lib.assertMsg valid "thriftPerlPackage requires explicit Perl distribution name and version";
-installed
+installed.overrideAttrs (old: {
+  passthru = (old.passthru or { }) // {
+    projections.perl = projection;
+  };
+})
