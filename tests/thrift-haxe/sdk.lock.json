@@ -1,0 +1,62 @@
+{
+  "currents": {
+    "crypto": "1.3.0",
+    "uuid": "2.4.1"
+  },
+  "entries": [
+    {
+      "hash": "sha256-DdCihGUzSj4fHbZYmcumVDB8ipsw8zD2kvNHDK7wivc=",
+      "mirrors": [],
+      "path": "archives/crypto-1,3,0.zip",
+      "url": "https://lib.haxe.org:443/files/3.0/crypto-1,3,0.zip"
+    },
+    {
+      "hash": "sha256-YF+xfZ+MpzvGBVsBf/W69HWXyNuS88+sWNEME/gIWDo=",
+      "mirrors": [],
+      "path": "archives/uuid-2,4,1.zip",
+      "url": "https://lib.haxe.org:443/files/3.0/uuid-2,4,1.zip"
+    }
+  ],
+  "extraInputs": [],
+  "inputs": {
+    "haxelib.json": {
+      "content": "{\n\t\"name\": \"thrift\",\n\t\"url\" : \"http://thrift.apache.org\",\n\t\"license\": \"Apache\",\n\t\"tags\": [\n\t\t\"thrift\", \n\t\t\"rpc\", \n\t\t\"serialization\", \n\t\t\"cross\", \n\t\t\"framework\"\n\t],\n\t\"description\": \"Haxe bindings for the Apache Thrift RPC and serialization framework\",\n\t\"version\": \"0.24.0\",\n\t\"releasenote\": \"Licensed under Apache License, Version 2.0. The Apache Thrift compiler needs to be installed separately.\",\n\t\"contributors\": [\"ApacheThrift\"],\n\t\"dependencies\": { \n\t\t\"crypto\": \"\",\n\t\t\"uuid\": \"\"\n\t},\n\t\"classPath\": \"src\"\n}\n",
+      "sha256": "6d630ba2777c3fc7863c4e138957f242f9363f88b7e15126447c9adfc76fa794"
+    }
+  },
+  "nodes": [
+    {
+      "classPath": "src",
+      "entry": "archives/crypto-1,3,0.zip",
+      "folder": "crypto",
+      "name": "crypto",
+      "version": "1.3.0",
+      "versionDir": "1,3,0"
+    },
+    {
+      "classPath": "src",
+      "entry": "archives/uuid-2,4,1.zip",
+      "folder": "uuid",
+      "name": "uuid",
+      "version": "2.4.1",
+      "versionDir": "2,4,1"
+    }
+  ],
+  "project": {
+    "classPath": "src",
+    "name": "thrift",
+    "package": true,
+    "version": "0.24.0"
+  },
+  "purifier": "haxelib",
+  "requested": [
+    "haxelib.json"
+  ],
+  "toolVersions": {
+    "haxe": "4.3.7",
+    "haxelib": "4.1.1",
+    "neko": "2.4.1",
+    "sdk": "eacccdf299d36d68175983d3e13fdb5162b90bb00a7c34193a139586502deb2c"
+  },
+  "version": 1
+}

@@ -672,6 +672,30 @@ constraints against the consumer's captured hosted downloads. Generated Dart
 and SDK method bytes stay unchanged. Per-program generation rejects output
 collisions, SDK package shadowing and an incomplete declared package graph.
 
+Native Thrift Haxe libraries can be selected on the supported Linux Haxelib
+SDKs with `thriftHaxePackage = { manifest = ./haxelib.json; };` and
+`thriftHaxeRuntimeBuilder`. Supply an authored native manifest with a distinct
+package name, version, relative class path and the exact matching `thrift`
+dependency. The manifest bytes and compiler-generated Haxe files are preserved.
+
+The runtime builder receives the original selected `thrift`, `haxe`,
+`nativeHaxelib` and `neko` packages. Return the original complete SDK `producer`,
+its original full `source`, `installedRoot`, native `repository`, and the same
+three Haxe tools. Any separately produced repository suppliers belong in
+`dependencies` as original Nix derivations. The SDK must be installed as a
+genuine versioned native package. Its complete source inventory, native
+dependency graph, constraints, selections and tool identities are verified.
+The fixture in `tests/thrift-haxe/runtime.nix` demonstrates this contract.
+
+`packages.thrift-haxe-bindings` exposes the native ZIP and complete immutable
+repository through `.projections.haxelib.archive` and `.repository`. The view
+also retains the selected native tools. Native local-ZIP installation, typed
+class metadata and parsed source origins are checked with the same Neko target
+and library paths as ordinary consumers. SDK and standard-library shadowing,
+output collisions and changed method bytes fail. This product does not add
+provided-dependency capture to the Haxelib purifier CLI. Other Haxe backends
+require their own native consumer verification.
+
 Native Thrift Erlang applications can be selected with
 `thriftErlangPackage = { name = "example_types"; version = "1.0.0"; };`
 alongside captured Thrift resources. `packages.thrift-erlang-bindings` contains

@@ -74,6 +74,7 @@
   # The shared library's functions (lib.purifier of the purifier flake),
   # which the package overlay passes.
   purifier,
+  haxelibPurifierSource ? null,
 }:
 {
   src,
@@ -120,6 +121,8 @@
   thriftErlangPackage ? null,
   thriftRubyPackage ? null,
   thriftDartPackage ? null,
+  thriftHaxePackage ? null,
+  thriftHaxeRuntimeBuilder ? null,
   thriftRubyDependencies ? [ ],
   cmakeFlags ? [ ],
   nativeBuildInputs ? [ ],
@@ -215,6 +218,10 @@ else
     thriftDart = callPackage ../thrift-dart-products { } {
       resources = resourceViews.resources;
       inherit thriftDartPackage;
+    };
+    thriftHaxe = callPackage ../thrift-haxe-products { inherit purifier haxelibPurifierSource; } {
+      resources = resourceViews.resources;
+      inherit thriftHaxePackage thriftHaxeRuntimeBuilder;
     };
     flatbuffersPython = callPackage ../flatbuffers-python-products { inherit purifier; } {
       resources = resourceViews.resources;
@@ -325,6 +332,7 @@ else
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (thriftRubyPackage != null) thriftRuby.projections
       // lib.optionalAttrs (thriftDartPackage != null) thriftDart.projections
+      // lib.optionalAttrs (thriftHaxePackage != null) thriftHaxe.projections
       // lib.optionalAttrs (thriftErlangPackage != null) thriftErlang.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // schemaJvm
@@ -383,6 +391,8 @@ else
         "thriftErlangPackage"
         "thriftRubyPackage"
         "thriftDartPackage"
+        "thriftHaxePackage"
+        "thriftHaxeRuntimeBuilder"
         "thriftRubyDependencies"
       ]
       // lib.optionalAttrs stdenv.buildPlatform.isDarwin {
@@ -506,6 +516,10 @@ else
     || (resourceRoots != { } && pname != "thrift-dart-bindings")
     || throw "cmake-purifier: thriftDartPackage requires captured resources and a distinct project name";
   assert
+    thriftHaxePackage == null
+    || (resourceRoots != { } && pname != "thrift-haxe-bindings")
+    || throw "cmake-purifier: thriftHaxePackage requires captured resources and a distinct project name";
+  assert
     flatbuffersPythonPackage == null
     || (resourceRoots != { } && pname != "flatbuffers-python-bindings" && thriftPythonPackage == null)
     || throw "cmake-purifier: flatbuffersPythonPackage requires resourceRoots, a distinct project name, and its own Python projection";
@@ -553,6 +567,7 @@ else
     // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
     // lib.optionalAttrs (thriftRubyPackage != null) { thrift-ruby-bindings = thriftRuby; }
     // lib.optionalAttrs (thriftDartPackage != null) { thrift-dart-bindings = thriftDart; }
+    // lib.optionalAttrs (thriftHaxePackage != null) { thrift-haxe-bindings = thriftHaxe; }
     // lib.optionalAttrs (thriftErlangPackage != null) { thrift-erlang-bindings = thriftErlang; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;

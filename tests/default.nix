@@ -14,6 +14,7 @@
   npmProjector,
   gradleProjector,
   pubProjectorSource,
+  haxelibPurifierSource,
   # The shared library's functions.
   purifier,
   # buildCMakeProject of the flake's package overlay, and
@@ -530,6 +531,12 @@ in
   inherit cmake-purifier;
 }
 // (import ./toolchains/checks.nix { inherit pkgs buildCMakeProject; })
+// lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+  thrift-haxe-products = import ./thrift-haxe-products.nix {
+    inherit pkgs purifier haxelibPurifierSource;
+    build = buildCMakeProject;
+  };
+}
 // lib.optionalAttrs pkgs.stdenv.buildPlatform.isDarwin {
   darwin-loopback-outbound =
     pkgs.runCommand "cmake-darwin-loopback-outbound"

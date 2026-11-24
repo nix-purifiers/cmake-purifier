@@ -1,0 +1,12 @@
+{
+  "name": "example-thrift-types",
+  "version": "1.0.0",
+  "classPath": "src",
+  "url": "https://example.invalid/thrift-types",
+  "license": "MIT",
+  "description": "Native Thrift schema fixture",
+  "tags": ["thrift"],
+  "contributors": ["nix-purifiers"],
+  "releasenote": "Native generated schema fixture",
+  "dependencies": {"thrift": "0.24.0"}
+}
