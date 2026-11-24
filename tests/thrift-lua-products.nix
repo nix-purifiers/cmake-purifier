@@ -140,10 +140,13 @@ pkgs.runCommand "native-thrift-lua-consumers"
     passAsFile = [ "controls" ];
   }
   ''
-    mkdir "$out"
-    cp -r ${a} "$out/first"
-    cp -r ${b} "$out/second"
-    cp -r ${c} "$out/qualified"
-    cp -r ${standard} "$out/standard"
+      mkdir "$out"
+      cp -r ${a} "$out/first"
+      cp -r ${b} "$out/second"
+      cp -r ${c} "$out/qualified"
+      cp -r ${standard} "$out/standard"
+      python3 ${./thrift-lua/byte-joins.py} ${first.source} ${first.source.proof} ${first} ${first.proof} ${a} > "$out/first-byte-joins.json"
+    python3 ${./thrift-lua/byte-joins.py} ${second.source} ${second.source.proof} ${second} ${second.proof} ${b} > "$out/second-byte-joins.json"
+    python3 ${./thrift-lua/byte-joins.py} ${namespaced.source} ${namespaced.source.proof} ${namespaced} ${namespaced.proof} ${c} > "$out/qualified-byte-joins.json"
     python3 ${./thrift-lua/controls.py} "$controlsPath" "$out/rejections.json"
   ''

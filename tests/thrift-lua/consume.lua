@@ -37,3 +37,14 @@ local trace = assert(io.open(arg[1],'w'))
 trace:write(table.concat(loaded,'\n'),'\n')
 trace:close()
 print('original Thrift Lua native wire42/RPC43 ' .. hex)
+
+local methods = assert(io.open(arg[1]:gsub('native%-modules.tsv$','native-methods.tsv'),'w'))
+for _, row in ipairs({
+  {'Envelope.read', Envelope.read}, {'Envelope.write', Envelope.write},
+  {'Value.read', Value.read}, {'Value.write', Value.write},
+  {'AnswerServiceClient.answer', AnswerServiceClient.answer},
+  {'AnswerServiceProcessor.process_answer', AnswerServiceProcessor.process_answer},
+  {'TBinaryProtocol.readI32', TBinaryProtocol.readI32},
+  {'TBinaryProtocol.writeI32', TBinaryProtocol.writeI32},
+}) do methods:write(row[1], '\t', debug.getinfo(row[2],'S').source, '\n') end
+methods:close()
