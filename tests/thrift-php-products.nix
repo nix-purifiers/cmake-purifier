@@ -62,19 +62,20 @@ let
         ];
       }
       ''
-        export HOME="$TMPDIR/home" COMPOSER_HOME="$TMPDIR/composer-home" COMPOSER_CACHE_DIR="$TMPDIR/cache"
-        export COMPOSER_DISABLE_NETWORK=1 COMPOSER_POLICY=0 COMPOSER_ROOT_VERSION=1.0.0
-        mkdir -p "$HOME" "$COMPOSER_HOME" "$COMPOSER_CACHE_DIR" "$out/project" "$out/proof"
-        python3 - ${product.projections.composer.catalog} ${product.projections.composer} "$out/project/composer.json" <<'PY'
-        import json,sys
-        from pathlib import Path
-        catalog=json.loads(Path(sys.argv[1]).read_text());root=catalog['roots'][0]
-        assert root['name']=='example/native-thrift-php'
-        Path(sys.argv[3]).write_text(json.dumps({'name':'example/ordinary-consumer','version':'1.0.0','require':{root['name']:'='+root['version']},'repositories':{'native':{'type':'artifact','url':sys.argv[2]},'packagist.org':False},'config':{'allow-plugins':{'php-http/discovery':True}}},indent=2)+'\n')
-        PY
-        cd "$out/project"
-        composer update --no-interaction --no-progress --no-audit
-        ${sdk.php}/bin/php ${script} "$out/project" ${pkgs.lib.escapeShellArg wire} > "$out/proof/consumer.json"
+          export HOME="$TMPDIR/home" COMPOSER_HOME="$TMPDIR/composer-home" COMPOSER_CACHE_DIR="$TMPDIR/cache"
+          export COMPOSER_DISABLE_NETWORK=1 COMPOSER_POLICY=0 COMPOSER_ROOT_VERSION=1.0.0
+          mkdir -p "$HOME" "$COMPOSER_HOME" "$COMPOSER_CACHE_DIR" "$out/project" "$out/proof"
+          python3 - ${product.projections.composer.catalog} ${product.projections.composer} "$out/project/composer.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          catalog=json.loads(Path(sys.argv[1]).read_text());root=catalog['roots'][0]
+          assert root['name']=='example/native-thrift-php'
+          Path(sys.argv[3]).write_text(json.dumps({'name':'example/ordinary-consumer','version':'1.0.0','require':{root['name']:'='+root['version']},'repositories':{'native':{'type':'artifact','url':sys.argv[2]},'packagist.org':False},'config':{'allow-plugins':{'php-http/discovery':True}}},indent=2)+'\n')
+          PY
+          cd "$out/project"
+          composer update --no-interaction --no-progress --no-audit
+          python3 ${./thrift-php/byte-joins.py} ${product.source} ${product.source.proof} ${product.runtime.source} ${product.runtimeProof}/runtime.json ${product.projections.composer} ${product.projections.composer.catalog} "$out/project" > "$out/proof/byte-joins.json"
+          ${sdk.php}/bin/php ${script} "$out/project" ${pkgs.lib.escapeShellArg wire} > "$out/proof/consumer.json"
       '';
   a = consume first ./thrift-php/consume.php "0c00010800010000002a0000";
   b = consume second ./thrift-php/consume.php "0c00010800020000002a0000";
@@ -110,5 +111,8 @@ pkgs.runCommand "thrift-php-native-product-consumers" { } ''
   cp ${a}/proof/consumer.json "$out/first.json"
   cp ${b}/proof/consumer.json "$out/second.json"
   cp ${c}/proof/consumer.json "$out/qualified.json"
+  cp ${a}/proof/byte-joins.json "$out/first-byte-joins.json"
+  cp ${b}/proof/byte-joins.json "$out/second-byte-joins.json"
+  cp ${c}/proof/byte-joins.json "$out/qualified-byte-joins.json"
   cp ${rejected} "$out/rejections.json"
 ''
