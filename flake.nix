@@ -14,7 +14,7 @@
     nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
     flake-parts.url = "github:hercules-ci/flake-parts";
     haxelib-purifier = {
-      url = "github:nix-purifiers/haxelib-purifier/v0.1.5";
+      url = "github:nix-purifiers/haxelib-purifier/v0.1.6";
       flake = false;
     };
   };
