@@ -98,6 +98,8 @@ for folder in sorted(repository.iterdir()):
                    'dependencies': document.get('dependencies', {}), 'files': inventory(root),
                    'folder': folder.name, 'marker': marker.name}
     markers[marker.relative_to(repository).as_posix()] = marker.read_text()
+if sdk['name'] in nodes and (nodes[sdk['name']]['marker'] != '.current' or markers[nodes[sdk['name']]['folder'] + '/.current'].strip() != sdk['version']):
+    raise ValueError('original SDK requires its exact native versioned installation')
 if sdk['name'] not in nodes or Path(nodes[sdk['name']]['root']) != installed:
     raise ValueError('native repository does not resolve the original SDK package')
 active = set()

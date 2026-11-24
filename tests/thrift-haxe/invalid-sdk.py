@@ -17,6 +17,9 @@ root = out / relative
 if sys.argv[3] == 'bytes':
     path = next((root / 'src').rglob('*.hx'))
     path.write_bytes(path.read_bytes() + b'\n// invalid SDK control\n')
+elif sys.argv[3] == 'development':
+    name = json.loads((root / 'haxelib.json').read_text())['name']
+    (out / 'repository' / name.replace('.', ',') / '.dev').write_text(str(root))
 else:
     name = sorted(json.loads((root / 'haxelib.json').read_text())['dependencies'])[0]
     folder = out / 'repository' / name.replace('.', ',')

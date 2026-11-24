@@ -147,6 +147,7 @@ pkgs.runCommand "thrift-haxe-native-package-consumers"
       installer = ../pkgs/thrift-haxe-products/install.py;
       runtimeVerifier = ../pkgs/thrift-haxe-products/runtime-proof.py;
       runtimeCases = [
+        (runtimeCase "development" "original SDK requires its exact native versioned installation")
         (runtimeCase "bytes" "native Haxe SDK source files changed")
         (runtimeCase "graph" "native SDK dependency is missing or incompatible")
       ];
