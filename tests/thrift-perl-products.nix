@@ -105,4 +105,6 @@ pkgs.runCommand "thrift-perl-native-cmake-consumers"
     ${second.projections.perl}/bin/perl ${./thrift-perl/consume.pl} 0c00010800020000002a0000 > "$out/projected-second.json"
     cp ${first.projections.perl}/catalog.json "$out/first-catalog.json"
     cp ${second.projections.perl}/catalog.json "$out/second-catalog.json"
+    python3 ${./thrift-perl/byte-joins.py} ${first.source} ${first.source.proof} ${first} ${first.sdk.src} ${first.runtime} > "$out/first-byte-joins.json"
+    python3 ${./thrift-perl/byte-joins.py} ${second.source} ${second.source.proof} ${second} ${second.sdk.src} ${second.runtime} > "$out/second-byte-joins.json"
   ''
