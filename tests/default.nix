@@ -157,6 +157,10 @@ let
   relock = "cmake-purifier lock";
 in
 {
+  thrift-ocaml-products = import ./thrift-ocaml-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   thrift-dart-products = import ./thrift-dart-products.nix {
     inherit pkgs purifier pubProjectorSource;
     build = buildCMakeProject;

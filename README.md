@@ -681,3 +681,32 @@ The `.projections.otp.applicationRoot` view composes the native compiled
 schema and runtime applications for `ERL_LIBS`. The native Erlang compiler supplies
 module metadata, and generated source bytes remain unchanged. The selected
 `beamPackages` and `thrift` packages remain overridable through the package scope.
+
+## Native Thrift OCaml packages
+
+Select `thriftOCamlPackage = { oasis = ./_oasis; };` with captured Thrift
+resources. Supply an original authored Oasis library definition covering all
+native generated modules and depending on the native `thrift` findlib package.
+The manifest bytes, compiler module names and generated method bytes are kept.
+
+`packages.thrift-ocaml-bindings` installs native findlib metadata, interfaces,
+bytecode and native archives through Oasis. Its `projections.ocaml` exposes
+`findlibPath`, `runtimeFindlibPath` and the original compiler `scope`. Ordinary
+consumers can add those paths to `OCAMLPATH` and use `ocamlfind ocamlc` or
+`ocamlfind ocamlopt` with the native package name from their Oasis definition.
+
+The default scope is the existing original Nix
+`ocaml-ng.ocamlPackages_4_14_unsafe_string`. This real compiler configuration is
+needed by the original SDK's legacy string APIs; modern OCaml 5.x support is not
+claimed. An explicitly supplied compatible original `scope` must contain its
+matching `ocaml`, `findlib`, `ocamlbuild` and `ocaml_oasis` tools. The SDK is built
+from the selected Thrift compiler's complete original source and authored Oasis
+metadata. No SDK methods, metadata versions or generated exports are patched.
+
+Native findlib queries verify package/runtime resolution and archives. Native
+interface CRCs and compiler typed-source digests join installed modules to the
+original SDK, selected compiler and unchanged generated source. The library must
+include every generated implementation/interface; SDK/standard-module shadowing,
+foreign interface ownership and per-program output collisions are rejected.
+Native-code and bytecode binary/RPC consumers cover two field revisions. Cross
+compilation and other OCaml compiler configurations need their own verification.
