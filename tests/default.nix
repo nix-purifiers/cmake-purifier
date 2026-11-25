@@ -162,6 +162,10 @@ in
     inherit pkgs purifier pubProjectorSource;
     build = buildCMakeProject;
   };
+  thrift-lua-products = import ./thrift-lua-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   thrift-php-products = import ./thrift-php-products.nix {
     inherit pkgs purifier composerPurifierSource;
     build = buildCMakeProject;

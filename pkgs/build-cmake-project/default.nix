@@ -119,6 +119,7 @@
   thriftGoProjector ? null,
   thriftPythonPackage ? null,
   thriftErlangPackage ? null,
+  thriftLuaPackage ? null,
   thriftRubyPackage ? null,
   thriftDartPackage ? null,
   thriftRubyDependencies ? [ ],
@@ -207,6 +208,10 @@ else
     thriftPython = callPackage ../thrift-python-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftPythonPackage;
+    };
+    thriftLua = callPackage ../thrift-lua-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftLuaPackage;
     };
     thriftErlang = callPackage ../thrift-erlang-products { inherit purifier; } {
       resources = resourceViews.resources;
@@ -337,6 +342,7 @@ else
       // lib.optionalAttrs (thriftRubyPackage != null) thriftRuby.projections
       // lib.optionalAttrs (thriftDartPackage != null) thriftDart.projections
       // lib.optionalAttrs (thriftErlangPackage != null) thriftErlang.projections
+      // lib.optionalAttrs (thriftLuaPackage != null) thriftLua.projections
       // lib.optionalAttrs (thriftPhpPackage != null) thriftPhp.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
       // schemaJvm
@@ -393,6 +399,7 @@ else
         "thriftGoProjector"
         "thriftPythonPackage"
         "thriftErlangPackage"
+        "thriftLuaPackage"
         "thriftRubyPackage"
         "thriftDartPackage"
         "thriftRubyDependencies"
@@ -509,6 +516,10 @@ else
     || (resourceRoots != { } && pname != "thrift-python-bindings")
     || throw "cmake-purifier: thriftPythonPackage requires resourceRoots and a project name other than thrift-python-bindings";
   assert
+    thriftLuaPackage == null
+    || (resourceRoots != { } && pname != "thrift-lua-bindings")
+    || throw "cmake-purifier: thriftLuaPackage requires captured resources and a distinct project name";
+  assert
     thriftErlangPackage == null
     || (resourceRoots != { } && pname != "thrift-erlang-bindings")
     || throw "cmake-purifier: thriftErlangPackage requires captured resources and a distinct project name";
@@ -573,6 +584,7 @@ else
     // lib.optionalAttrs (thriftRubyPackage != null) { thrift-ruby-bindings = thriftRuby; }
     // lib.optionalAttrs (thriftDartPackage != null) { thrift-dart-bindings = thriftDart; }
     // lib.optionalAttrs (thriftErlangPackage != null) { thrift-erlang-bindings = thriftErlang; }
+    // lib.optionalAttrs (thriftLuaPackage != null) { thrift-lua-bindings = thriftLua; }
     // lib.optionalAttrs (thriftPhpPackage != null) { thrift-php-bindings = thriftPhp; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;
