@@ -85,6 +85,7 @@
             checks = import ../../../tests {
               inherit pkgs;
               pubProjectorSource = inputs.pub-projector;
+              haxelibPurifierSource = inputs.haxelib-purifier;
               composerPurifierSource = inputs.composer-purifier;
               goProjector = inputs.go-projector.packages.${system}.default;
               gradleProjector =

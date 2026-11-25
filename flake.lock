@@ -166,6 +166,23 @@
         "type": "github"
       }
     },
+    "haxelib-purifier": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795555150,
+        "narHash": "sha256-6Jf7Pbh8FnCfZB5yC1Ndx4zcVme6f6dyjSyapHzZHew=",
+        "owner": "nix-purifiers",
+        "repo": "haxelib-purifier",
+        "rev": "29dd821bf3e81fe7d8c330af75b204c2555548bb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-purifiers",
+        "ref": "v0.1.6",
+        "repo": "haxelib-purifier",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1793341285,
@@ -315,6 +332,7 @@
         "caisson": "caisson",
         "composer-purifier": "composer-purifier",
         "flake-parts": "flake-parts_2",
+        "haxelib-purifier": "haxelib-purifier",
         "nixpkgs": "nixpkgs",
         "nixpkgs-lib": "nixpkgs-lib_3",
         "purifier": "purifier"
