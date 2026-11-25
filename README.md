@@ -720,3 +720,25 @@ original SDK/builtin/earlier generated bindings. The selected interpreter must b
 an original unwrapped Lua 5.4 package. No LuaRocks metadata is manufactured.
 Binary protocol and generated client/processor RPC consumers are covered; other
 protocol behavior and cross compilation are not claimed.
+
+Native Thrift PHP packages can be selected with
+`thriftPhpPackage = { name = "example/types"; version = "1.0.0"; };`
+alongside captured Thrift resources. `packages.thrift-php-bindings` is the
+native installed Composer project and `.projections.composer` is its artifact
+repository, including the selected SDK and its transitive packages.
+
+Pass `thriftPhpRuntimeBuilder = { thrift, php, composer }: ...;` to build the
+complete original SDK Composer root from its native lock. The callback returns
+`{ producer; source; installedRoot; }`: the original Nix producer with a
+`projections.composer` repository, its original SDK source root, and the native
+Composer installation inside that producer. The adapter verifies the SDK's
+source manifest, all declared autoload files and the full locked installation.
+`thriftPhpRuntime` can select the original PHP package, including its extensions;
+its Composer is used for generation and installation too.
+
+The native compiler supplies each program's PHP files. Native Composer class
+metadata rejects collisions between programs and with the actual SDK autoload
+roots. Generated method and wire bytes remain unchanged. The generated package
+is installed against the SDK's artifact repository using the released Composer
+purifier's native root capture; generated catalogs and SDK metadata are read
+inside builders.
