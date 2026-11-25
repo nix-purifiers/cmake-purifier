@@ -15,6 +15,7 @@
   gradleProjector,
   pubProjectorSource,
   haxelibPurifierSource,
+  composerPurifierSource,
   # The shared library's functions.
   purifier,
   # buildCMakeProject of the flake's package overlay, and
@@ -160,6 +161,10 @@ in
 {
   thrift-dart-products = import ./thrift-dart-products.nix {
     inherit pkgs purifier pubProjectorSource;
+    build = buildCMakeProject;
+  };
+  thrift-php-products = import ./thrift-php-products.nix {
+    inherit pkgs purifier composerPurifierSource;
     build = buildCMakeProject;
   };
   thrift-erlang-products = import ./thrift-erlang-products.nix {

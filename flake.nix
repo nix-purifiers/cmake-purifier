@@ -8,6 +8,10 @@
     # The shared library of the nix-purifiers: the download entries and
     # their fetches.
     purifier.url = "github:nix-purifiers/purifier/v0.1.67";
+    composer-purifier = {
+      url = "github:nix-purifiers/composer-purifier/2e9109dddff147f6aa9480ed39a306d13a65180d";
+      flake = false;
+    };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     # The library comes from the nixpkgs.lib mirror. The package sets
     # take nixpkgs.
