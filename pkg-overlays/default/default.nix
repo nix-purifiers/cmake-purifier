@@ -33,6 +33,7 @@
       buildCMakeProject = self.callPackage ../../pkgs/build-cmake-project/default.nix {
         inherit (closure-lib) purifier;
         cartonPurifierSource = closure-inputs.carton-purifier;
+        composerPurifierSource = closure-inputs.composer-purifier;
       };
     });
   };
