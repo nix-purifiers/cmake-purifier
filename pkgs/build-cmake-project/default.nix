@@ -74,6 +74,7 @@
   # The shared library's functions (lib.purifier of the purifier flake),
   # which the package overlay passes.
   purifier,
+  cartonPurifierSource ? null,
   composerPurifierSource ? null,
 }:
 {
@@ -122,6 +123,8 @@
   thriftRubyPackage ? null,
   thriftDartPackage ? null,
   thriftRubyDependencies ? [ ],
+  thriftPerlPackage ? null,
+  thriftPerlRuntime ? null,
   thriftPhpPackage ? null,
   thriftPhpRuntime ? null,
   thriftPhpRuntimeBuilder ? null,
@@ -220,6 +223,26 @@ else
       resources = resourceViews.resources;
       inherit thriftDartPackage;
     };
+    thriftPerl =
+      callPackage ../thrift-perl-products
+        {
+          inherit purifier cartonPurifierSource;
+          perl =
+            if thriftPerlRuntime != null then
+              thriftPerlRuntime
+            else
+              callPackage (
+                { perl }:
+                perl.withPackages (ps: [
+                  ps.BitVector
+                  ps.ClassAccessor
+                ])
+              ) { };
+        }
+        {
+          resources = resourceViews.resources;
+          inherit thriftPerlPackage;
+        };
     thriftPhp = (callPackage ../thrift-php-products { inherit purifier composerPurifierSource; }) (
       {
         resources = resourceViews.resources;
@@ -336,6 +359,7 @@ else
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (thriftRubyPackage != null) thriftRuby.projections
       // lib.optionalAttrs (thriftDartPackage != null) thriftDart.projections
+      // lib.optionalAttrs (thriftPerlPackage != null) thriftPerl.projections
       // lib.optionalAttrs (thriftErlangPackage != null) thriftErlang.projections
       // lib.optionalAttrs (thriftPhpPackage != null) thriftPhp.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
@@ -396,6 +420,8 @@ else
         "thriftRubyPackage"
         "thriftDartPackage"
         "thriftRubyDependencies"
+        "thriftPerlPackage"
+        "thriftPerlRuntime"
         "thriftPhpPackage"
         "thriftPhpRuntime"
         "thriftPhpRuntimeBuilder"
@@ -521,6 +547,10 @@ else
     || (resourceRoots != { } && pname != "thrift-dart-bindings")
     || throw "cmake-purifier: thriftDartPackage requires captured resources and a distinct project name";
   assert
+    thriftPerlPackage == null
+    || (resourceRoots != { } && pname != "thrift-perl-bindings")
+    || throw "cmake-purifier: thriftPerlPackage requires captured resources and a distinct project name";
+  assert
     thriftPhpPackage == null
     || (resourceRoots != { } && pname != "thrift-php-bindings")
     || throw "cmake-purifier: thriftPhpPackage requires captured resources and a distinct project name";
@@ -573,6 +603,7 @@ else
     // lib.optionalAttrs (thriftRubyPackage != null) { thrift-ruby-bindings = thriftRuby; }
     // lib.optionalAttrs (thriftDartPackage != null) { thrift-dart-bindings = thriftDart; }
     // lib.optionalAttrs (thriftErlangPackage != null) { thrift-erlang-bindings = thriftErlang; }
+    // lib.optionalAttrs (thriftPerlPackage != null) { thrift-perl-bindings = thriftPerl; }
     // lib.optionalAttrs (thriftPhpPackage != null) { thrift-php-bindings = thriftPhp; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
       flatbuffers-python-bindings = flatbuffersPython;

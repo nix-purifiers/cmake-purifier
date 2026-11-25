@@ -17,6 +17,10 @@
     # take nixpkgs.
     nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    carton-purifier = {
+      url = "github:nix-purifiers/carton-purifier/v0.1.3";
+      flake = false;
+    };
   };
 
   outputs =

@@ -170,6 +170,10 @@ in
     inherit pkgs;
     build = buildCMakeProject;
   };
+  thrift-perl-products = import ./thrift-perl-products.nix {
+    inherit pkgs;
+    build = buildCMakeProject;
+  };
   thrift-ruby-products = import ./thrift-ruby-products.nix {
     inherit pkgs;
     build = buildCMakeProject;
