@@ -1,0 +1,13 @@
+OASISFormat: 0.3
+Name: example-thrift
+Version: 1.0.0
+Synopsis: Native generated Thrift schema consumer
+Authors: Example
+License: Apache-2.0
+BuildTools: ocamlbuild
+Plugins: META (0.3), DevFiles (0.3)
+Library example-thrift
+  Path: src
+  FindlibName: example-thrift
+  BuildDepends: thrift
+  Modules: Value_types,Value_consts,Main_types,Main_consts,AnswerService

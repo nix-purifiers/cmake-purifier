@@ -121,6 +121,7 @@
   thriftErlangPackage ? null,
   thriftRubyPackage ? null,
   thriftDartPackage ? null,
+  thriftOCamlPackage ? null,
   thriftRubyDependencies ? [ ],
   thriftPhpPackage ? null,
   thriftPhpRuntime ? null,
@@ -215,6 +216,10 @@ else
     thriftRuby = callPackage ../thrift-ruby-products { inherit purifier; } {
       resources = resourceViews.resources;
       inherit thriftRubyPackage thriftRubyDependencies;
+    };
+    thriftOCaml = callPackage ../thrift-ocaml-products { inherit purifier; } {
+      resources = resourceViews.resources;
+      inherit thriftOCamlPackage;
     };
     thriftDart = callPackage ../thrift-dart-products { } {
       resources = resourceViews.resources;
@@ -336,6 +341,7 @@ else
       // lib.optionalAttrs (thriftPythonPackage != null) thriftPython.projections
       // lib.optionalAttrs (thriftRubyPackage != null) thriftRuby.projections
       // lib.optionalAttrs (thriftDartPackage != null) thriftDart.projections
+      // lib.optionalAttrs (thriftOCamlPackage != null) thriftOCaml.projections
       // lib.optionalAttrs (thriftErlangPackage != null) thriftErlang.projections
       // lib.optionalAttrs (thriftPhpPackage != null) thriftPhp.projections
       // lib.optionalAttrs (flatbuffersPythonPackage != null) flatbuffersPython.projections
@@ -395,6 +401,7 @@ else
         "thriftErlangPackage"
         "thriftRubyPackage"
         "thriftDartPackage"
+        "thriftOCamlPackage"
         "thriftRubyDependencies"
         "thriftPhpPackage"
         "thriftPhpRuntime"
@@ -517,6 +524,10 @@ else
     || (resourceRoots != { } && pname != "thrift-ruby-bindings")
     || throw "cmake-purifier: thriftRubyPackage requires captured resources and a distinct project name";
   assert
+    thriftOCamlPackage == null
+    || (resourceRoots != { } && pname != "thrift-ocaml-bindings")
+    || throw "cmake-purifier: thriftOCamlPackage requires captured resources and a distinct project name";
+  assert
     thriftDartPackage == null
     || (resourceRoots != { } && pname != "thrift-dart-bindings")
     || throw "cmake-purifier: thriftDartPackage requires captured resources and a distinct project name";
@@ -572,6 +583,7 @@ else
     // lib.optionalAttrs (thriftPythonPackage != null) { thrift-python-bindings = thriftPython; }
     // lib.optionalAttrs (thriftRubyPackage != null) { thrift-ruby-bindings = thriftRuby; }
     // lib.optionalAttrs (thriftDartPackage != null) { thrift-dart-bindings = thriftDart; }
+    // lib.optionalAttrs (thriftOCamlPackage != null) { thrift-ocaml-bindings = thriftOCaml; }
     // lib.optionalAttrs (thriftErlangPackage != null) { thrift-erlang-bindings = thriftErlang; }
     // lib.optionalAttrs (thriftPhpPackage != null) { thrift-php-bindings = thriftPhp; }
     // lib.optionalAttrs (flatbuffersPythonPackage != null) {
