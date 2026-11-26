@@ -27,7 +27,9 @@
 # version-control system: `hg = { url, rev, subrepos }`,
 # `svn = { url, rev, ignoreExternals, ignoreKeywords }`, or
 # `cvs = { cvsRoot, module, tag, date }` with one of `tag` and `date` null,
-# each with the hash of the nixpkgs fetcher's output. These are the
+# each with the hash of the nixpkgs fetcher's output, or an inline file,
+# `{ path, contents }`, that an HTTP handler of the lock run wrote, such
+# as a page of a package index. These are the
 # download entries of the shared nix-purifiers library. A file's `path` is
 # `<scheme>/<host>/<path>` of its URL, where mitm-cache replays it; a
 # checkout's `path` starts with its tool and ends with its revision.

@@ -22,9 +22,21 @@
   buildCMakeProject,
   readLock,
   cmake-purifier,
+  # The command with pip-purifier's PyPI handler in its scope.
+  pypiLockCommand,
 }:
 let
   inherit (pkgs) lib;
+
+  # A configure that installs a package with pip, which pip builds with
+  # setuptools from PyPI, from the lockfile that pip-purifier's PyPI
+  # handler wrote the index page of. The build replays the page and the
+  # wheel, with no handler.
+  pipConfigure =
+    (buildCMakeProject {
+      src = ./fixtures/pip-configure;
+      nativeBuildInputs = [ pkgs.python3 ];
+    }).packages.purifier-pip-configure;
 
   # The fixture builds the way a consumer's package does: through the
   # buildCMakeProject of the package overlay.
@@ -376,6 +388,34 @@ in
   # records of each kind.
   lock-records = pkgs.runCommand "lock-records" { } ''
     ${pkgs.python3}/bin/python3 -I ${../lock/test_records.py} ${../lock}
+    touch $out
+  '';
+
+  # The pip-configure fixture, built from its lockfile: the configure's pip
+  # install finds the page and the wheel that the lock run's PyPI handler
+  # locked, and installs demo, whose VALUE the configure writes out.
+  pip-configure = pkgs.runCommand "pip-configure" { } ''
+    [ "$(cat ${pipConfigure}/share/purifier-pip-configure/value.txt)" = 42 ]
+    touch $out
+  '';
+
+  # What tests/relock-fixtures.sh locks the pip-configure fixture with:
+  # the command with pip-purifier's PyPI handler, and the build's Python.
+  pip-configure-tools = pkgs.buildEnv {
+    name = "cmake-purifier-pip-configure-tools";
+    paths = [
+      pypiLockCommand
+      pkgs.cmake
+      pkgs.gnumake
+      pkgs.python3
+    ];
+  };
+
+  # The HTTP handlers of the lock run (lock/handlers.py), with stand-in
+  # handlers.
+  lock-handlers = pkgs.runCommand "lock-handlers" { } ''
+    mkdir scratch
+    ${pkgs.python3}/bin/python3 -I ${../lock/test_handlers.py} ${../lock} "$PWD/scratch"
     touch $out
   '';
 

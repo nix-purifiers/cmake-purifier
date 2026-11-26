@@ -19,7 +19,12 @@
 # - git.jsonl, hg.jsonl, svn.jsonl and cvs.jsonl, the records of the tool
 #   wrappers, a line per command with its working directory and arguments.
 # - flags.json, the configure arguments.
+# - handlers.json, the HTTP handlers of the lock run (handlers.py).
 # - build/ and prefix/, the build directory and the install.
+#
+# The handlers see the HTTP record first. The responses they claim become
+# their entries instead: their files are artifacts like the others, and
+# their inline entries are artifacts as they wrote them.
 #
 # records.py reads the records. This script adds what needs the checkouts
 # or the network: every git checkout is hashed with nix-prefetch-git, and
@@ -45,6 +50,7 @@ from typing import NoReturn
 # python3 -I leaves the script's own directory out of the module path.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import records
+import handlers
 import installed
 from urls import https_of, index_page, url_path
 
@@ -95,9 +101,20 @@ with open(os.path.join(work, "observed.json")) as f:
     observed = json.load(f)
 with open(os.path.join(work, "flags.json")) as f:
     flags = json.load(f)
+handler_programs = []
+if os.path.exists(os.path.join(work, "handlers.json")):
+    with open(os.path.join(work, "handlers.json")) as f:
+        handler_programs = json.load(f)
 
 try:
-    files = records.file_artifacts(read_lines("http.jsonl"))
+    responses, handled = handlers.apply_handlers(read_lines("http.jsonl"), handler_programs)
+except handlers.HandlerError as error:
+    fail(str(error))
+inline = [entry for entry in handled if "contents" in entry]
+
+try:
+    files = records.file_artifacts(responses)
+    files.update((entry["url"], entry) for entry in handled if "url" in entry)
     git_clones = records.git_clones(read_lines("git.jsonl"))
     hg_clones = records.hg_clones(read_lines("hg.jsonl"))
     svn_checkouts = records.svn_checkouts(read_lines("svn.jsonl"))
@@ -266,12 +283,17 @@ def content_hash(document):
     return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
 
 
+all_artifacts = sorted([*files.values(), *artifacts.values(), *inline], key=lambda a: a["path"])
+paths = [a["path"] for a in all_artifacts]
+for path in sorted({p for p in paths if paths.count(p) > 1}):
+    fail(f"two downloads of the lock run replay from {path}; an HTTP handler wrote an entry another download already has")
+
 lock = {
     "version": int(lock_version),
     "project": observed["project"],
     "definitionHash": definition_hash,
     "cmakeFlags": flags,
-    "artifacts": sorted([*files.values(), *artifacts.values()], key=lambda a: a["path"]),
+    "artifacts": all_artifacts,
     "dependencies": sorted(dependencies, key=lambda d: d["name"]),
     "gitCheckouts": by_repo_ref(git_table),
     "hgCheckouts": by_repo_ref(hg_table),

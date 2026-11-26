@@ -1,0 +1,37 @@
+{
+  "version": 3,
+  "project": {
+    "name": "purifier-pip-configure",
+    "version": ""
+  },
+  "definitionHash": "c1273c6e3bdcee4909a9abef7e59cb9991b50da2008fe125f61ad616f721b194",
+  "cmakeFlags": [],
+  "artifacts": [
+    {
+      "hash": "sha256-Bi00IirRPgzDEqTALXPwWehqSsv73qj492soyZ8waSI=",
+      "mirrors": [],
+      "path": "https/files.pythonhosted.org/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl"
+    },
+    {
+      "contents": "<!DOCTYPE html>\n<html>\n  <head>\n    <meta name=\"pypi:repository-version\" content=\"1.0\">\n  </head>\n  <body>\n  </body>\n</html>\n",
+      "path": "https/pypi.org/simple/pip/index.html"
+    },
+    {
+      "contents": "<!DOCTYPE html>\n<html>\n  <head>\n    <meta name=\"pypi:repository-version\" content=\"1.0\">\n  </head>\n  <body>\n    <a href=\"https://files.pythonhosted.org/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl#sha256=062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922\">setuptools-80.9.0-py3-none-any.whl</a><br/>\n  </body>\n</html>\n",
+      "path": "https/pypi.org/simple/setuptools/index.html"
+    }
+  ],
+  "dependencies": [],
+  "gitCheckouts": [],
+  "hgCheckouts": [],
+  "svnCheckouts": [],
+  "cvsCheckouts": [],
+  "outputs": {
+    "files": [
+      "share/purifier-pip-configure/value.txt"
+    ],
+    "targets": {}
+  },
+  "contentHash": "sha256:12916a26c3177d6a22011d5605cdb3bea56239c81225d35df65c081e33fc0316"
+}

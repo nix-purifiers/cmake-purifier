@@ -1,0 +1,2 @@
+# setuptools writes it when the lock run builds demo from this directory.
+demo/*.egg-info/

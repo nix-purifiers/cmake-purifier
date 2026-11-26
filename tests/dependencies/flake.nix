@@ -20,6 +20,8 @@
     url = "git+https://github.com/nix-purifiers/gradle-purifier?ref=refs/tags/v0.1.23";
     flake = false;
   };
+  # pypi-handler, the HTTP handler that locks the pip-configure fixture.
+  inputs.pip-purifier.url = "github:nix-purifiers/pip-purifier/v0.1.13";
   inputs.treefmt-nix.url = "github:numtide/treefmt-nix";
   inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   outputs = { ... }: { };

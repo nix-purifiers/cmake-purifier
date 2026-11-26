@@ -35,6 +35,17 @@
 # hold files before the configure; the sandbox build does the same in
 # its preConfigure.
 #
+# Before it writes the lockfile, `lock` hands the HTTP record to each
+# program in `httpHandlers`, the handlers of the purifier library's HTTP
+# handler protocol (tools/http_records.py of the library), such as
+# pip-purifier's pypi-handler for a configure that runs pip. A handler
+# claims the responses it understands, such as the pages of a package
+# index, which change whenever a project publishes a file, and returns
+# the download entries that replace them; the lockfile holds those entries
+# with the rest, and a build from the lockfile replays them without the
+# handler. A project sets the handlers with
+# `cmake-purifier.overrideScope (_: _: { httpHandlers = [ ... ]; })`.
+#
 # `lock` keeps what the lockfile already resolved: a checkout whose ref
 # moves, such as a git branch, an svn checkout at HEAD or a CVS checkout
 # without a tag, stays at its locked revision (lock/pin.py). `update`
@@ -87,6 +98,9 @@
   python3Packages,
   coreutils,
   gh,
+  # The HTTP handlers of the lock run, each a package whose main program
+  # follows the handler protocol of the shared library.
+  httpHandlers ? [ ],
   # The source of the shared library of the nix-purifiers, which the
   # package overlay passes.
   purifier ? throw "cmake-purifier: the command needs the source of the shared purifier library; take it from this flake's overlay",
@@ -376,6 +390,7 @@ else
         [ -f "$work/observed.json" ] || die "the configure run wrote no record of its dependencies"
 
         jq -n '$ARGS.positional' --args -- ''${args[@]+"''${args[@]}"} > "$work/flags.json"
+        jq -n '$ARGS.positional' --args -- ${lib.escapeShellArgs (map lib.getExe httpHandlers)} > "$work/handlers.json"
         "$python" -I "$lockdir/assemble.py" "$work" "$lockVersion" "$lockfile" "$nixpkgs" \
           "$nixlib" "$purifierlib" "$realGit" "$realHg" "$realSvn" "$prefetchGit" \
           "$definition" "$work/pins.json"

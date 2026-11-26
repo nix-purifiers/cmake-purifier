@@ -22,6 +22,10 @@ lock() {
 lock -S "$root/tests/fixtures/basic"
 lock -S "$root/tests/fixtures/extras"
 
+# The pip-configure fixture's configure runs pip against PyPI, whose pages
+# the PyPI handler of pip-purifier locks; its tools have the handler.
+nix shell "$root#checks.$system.pip-configure-tools" -c cmake-purifier lock -S "$root/tests/fixtures/pip-configure"
+
 # The vcs lockfile names the repositories by their store path, which is
 # the path of `vcs-repos` on x86_64-linux. On a system where `vcs-repos`
 # has another path, the fixture locks into a scratch lockfile, which must

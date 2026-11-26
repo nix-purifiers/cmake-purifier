@@ -20,7 +20,9 @@
 #   per Mercurial, Subversion and CVS checkout, with the repository, the
 #   ref and the store path of the checkout, for vcs-shim.sh.
 # - `http/`: every locked file at its artifact path, which is
-#   `<scheme>/<host>/<path>` of its URL, the layout mitm-cache replays.
+#   `<scheme>/<host>/<path>` of its URL, the layout mitm-cache replays,
+#   and every inline artifact at its path, such as `index.html` of a page
+#   of a package index.
 {
   lib,
   stdenv,
@@ -136,7 +138,9 @@ let
     fetcherArgs
     // {
       name = "cmake-purifier-http";
-      entries = builtins.filter (artifact: artifact ? url) entries;
+      # The files, and the inline entries an HTTP handler of the lock run
+      # wrote, such as the pages of a package index.
+      entries = builtins.filter (artifact: artifact ? url || artifact ? contents) entries;
     }
   );
 

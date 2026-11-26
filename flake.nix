@@ -7,7 +7,7 @@
     caisson.url = "github:nix-caisson/caisson";
     # The shared library of the nix-purifiers: the download entries and
     # their fetches.
-    purifier.url = "github:nix-purifiers/purifier/v0.1.67";
+    purifier.url = "github:nix-purifiers/purifier/v0.1.71";
     composer-purifier = {
       url = "github:nix-purifiers/composer-purifier/2e9109dddff147f6aa9480ed39a306d13a65180d";
       flake = false;

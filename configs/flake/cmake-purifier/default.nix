@@ -112,6 +112,14 @@
                 );
               inherit (self.lib) purifier;
               inherit ((pkgs.extend self.overlays.default).cmake-purifier) buildCMakeProject;
+              # The command with pip-purifier's PyPI handler, which locks the
+              # pip-configure fixture.
+              pypiLockCommand =
+                ((pkgs.extend self.overlays.default).cmake-purifier.overrideScope (
+                  _: _: {
+                    httpHandlers = [ (pkgs.extend inputs.pip-purifier.overlays.default).pip-purifier.pypi-handler ];
+                  }
+                )).cmake-purifier;
               inherit (self.lib.cmake-purifier) readLock;
               inherit (self.packages.${system}) cmake-purifier;
             };

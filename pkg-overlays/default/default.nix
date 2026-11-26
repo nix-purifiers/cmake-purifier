@@ -16,7 +16,11 @@
 #
 # Both use the shared library of the nix-purifiers: the builder its
 # functions, and the command its source, which the command's own
-# nix-build calls import.
+# nix-build calls import. Both replay downloads with the library's
+# replay server, the scope's `mitm-cache`, which serves a directory URL
+# from its index.html, as an HTTP handler of the lock run lays out a page
+# of a package index. The scope's `httpHandlers`, empty unless a project
+# sets it, are the handlers the command's lock run applies.
 {
   closure-lib,
   closure-inputs,
@@ -25,6 +29,8 @@
 {
   overlay = final: prev: {
     cmake-purifier = final.lib.makeScope final.newScope (self: {
+      mitm-cache = closure-lib.purifier.replayServer { inherit (final) mitm-cache; };
+      httpHandlers = [ ];
       cmake-purifier = self.callPackage ../../pkgs/cmake-purifier {
         purifier = closure-inputs.purifier;
         # Keep local CMake on PATH unless the scope explicitly selects an SDK.
